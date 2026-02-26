@@ -1,0 +1,3188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paw Journal — Dog Health Tracker</title>
+<meta name="theme-color" content="#C4855A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Paw Journal">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF6F0;
+    --warm: #F5EDE0;
+    --sand: #E8D5BC;
+    --bark: #8B6645;
+    --dark-bark: #5C3D1E;
+    --paw: #C4855A;
+    --paw-light: #E8A87C;
+    --sage: #7A9E7E;
+    --sage-light: #B2D0B5;
+    --blush: #D4877A;
+    --sky: #7AAFC4;
+    --text: #2C1A0E;
+    --text-mid: #6B4C2A;
+    --text-light: #9E7B56;
+    --card: rgba(255,255,255,0.7);
+    --shadow: 0 4px 24px rgba(92,61,30,0.10);
+    --shadow-hover: 0 8px 32px rgba(92,61,30,0.18);
+    --radius: 20px;
+    --radius-sm: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(196,133,90,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(122,158,126,0.07) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(250,246,240,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--sand);
+    padding: 0 24px;
+  }
+
+  .header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--dark-bark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-paw { font-size: 1.6rem; }
+
+  .dog-name-display {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    font-weight: 400;
+  }
+  .dog-name-display span {
+    font-weight: 600;
+    color: var(--paw);
+  }
+
+  /* NAV TABS */
+  nav {
+    background: var(--warm);
+    border-bottom: 1px solid var(--sand);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    gap: 2px;
+    padding: 8px 16px 0;
+  }
+
+  .nav-tab {
+    flex-shrink: 0;
+    padding: 10px 18px;
+    border: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-light);
+    cursor: pointer;
+    border-radius: 10px 10px 0 0;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .nav-tab:hover { background: rgba(196,133,90,0.1); color: var(--paw); }
+  .nav-tab.active {
+    background: var(--cream);
+    color: var(--dark-bark);
+    font-weight: 600;
+    border: 1px solid var(--sand);
+    border-bottom: 1px solid var(--cream);
+  }
+
+  /* MAIN */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--sand);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(8px);
+    margin-bottom: 20px;
+    transition: box-shadow 0.2s;
+  }
+  .card:hover { box-shadow: var(--shadow-hover); }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    color: var(--dark-bark);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* FORM ELEMENTS */
+  .form-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 140px;
+  }
+
+  label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  input, select, textarea {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    color: var(--text);
+    background: rgba(255,255,255,0.8);
+    border: 1.5px solid var(--sand);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--paw);
+    box-shadow: 0 0 0 3px rgba(196,133,90,0.15);
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* BUTTONS */
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.88rem;
+    padding: 11px 24px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: var(--paw);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--dark-bark); transform: translateY(-1px); }
+
+  .btn-sage {
+    background: var(--sage);
+    color: white;
+  }
+  .btn-sage:hover { background: #5a8060; transform: translateY(-1px); }
+
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--paw);
+    color: var(--paw);
+  }
+  .btn-outline:hover { background: rgba(196,133,90,0.1); }
+
+  /* LOG ENTRIES */
+  .log-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+
+  .log-entry {
+    background: rgba(255,255,255,0.6);
+    border: 1px solid var(--sand);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    position: relative;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .log-entry-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background: var(--warm);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .log-entry-content { flex: 1; }
+
+  .log-entry-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--dark-bark);
+  }
+
+  .log-entry-detail {
+    font-size: 0.82rem;
+    color: var(--text-light);
+    margin-top: 2px;
+  }
+
+  .log-entry-time {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    flex-shrink: 0;
+  }
+
+  .log-entry-delete {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--sand);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+  .log-entry-delete:hover { background: #fee; color: var(--blush); }
+
+  /* PILL BUTTONS (mood, stool, etc.) */
+  .pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .pill {
+    padding: 7px 16px;
+    border: 1.5px solid var(--sand);
+    border-radius: 50px;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-mid);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .pill:hover { border-color: var(--paw); color: var(--paw); }
+  .pill.selected { background: var(--paw); border-color: var(--paw); color: white; }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+  @media (max-width: 700px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .form-row { flex-direction: column; }
+  }
+
+  /* STATS OVERVIEW */
+  .stat-box {
+    background: var(--card);
+    border: 1px solid var(--sand);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+
+  .stat-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    color: var(--paw);
+    font-weight: 700;
+  }
+
+  .stat-label {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    font-weight: 500;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* PHOTO UPLOAD */
+  .photo-upload-area {
+    border: 2px dashed var(--sand);
+    border-radius: var(--radius-sm);
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(255,255,255,0.4);
+  }
+
+  .photo-upload-area:hover {
+    border-color: var(--paw);
+    background: rgba(196,133,90,0.05);
+  }
+
+  .photo-preview-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .photo-thumb {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid var(--sand);
+  }
+
+  /* TREND SECTION */
+  .trend-card {
+    background: var(--card);
+    border: 1px solid var(--sand);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .trend-insight {
+    background: linear-gradient(135deg, rgba(196,133,90,0.08), rgba(122,158,126,0.08));
+    border: 1px solid var(--sand);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .insight-icon { font-size: 1.4rem; flex-shrink: 0; }
+
+  .insight-text h4 {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--dark-bark);
+    margin-bottom: 4px;
+  }
+
+  .insight-text p {
+    font-size: 0.82rem;
+    color: var(--text-light);
+    line-height: 1.5;
+  }
+
+  /* Mini bar chart */
+  .mini-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 60px;
+    margin-top: 8px;
+  }
+
+  .mini-bar {
+    flex: 1;
+    background: var(--paw-light);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.5s ease;
+    position: relative;
+  }
+
+  .mini-bar-label {
+    font-size: 0.65rem;
+    color: var(--text-light);
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  .section-header {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    color: var(--dark-bark);
+    margin-bottom: 6px;
+  }
+
+  .section-sub {
+    font-size: 0.88rem;
+    color: var(--text-light);
+    margin-bottom: 28px;
+  }
+
+  /* SETUP */
+  .setup-hero {
+    text-align: center;
+    padding: 60px 20px 40px;
+  }
+
+  .setup-paw {
+    font-size: 5rem;
+    display: block;
+    margin-bottom: 16px;
+    animation: bounce 2s infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* ENERGY SLIDER */
+  .slider-container { position: relative; }
+  input[type="range"] {
+    -webkit-appearance: none;
+    height: 6px;
+    background: linear-gradient(to right, var(--paw-light), var(--paw));
+    border-radius: 3px;
+    border: none;
+    box-shadow: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--paw);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(196,133,90,0.4);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 32px;
+    color: var(--text-light);
+    font-size: 0.88rem;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+
+  .badge-paw { background: rgba(196,133,90,0.15); color: var(--paw); }
+  .badge-sage { background: rgba(122,158,126,0.15); color: var(--sage); }
+  .badge-blush { background: rgba(212,135,122,0.15); color: var(--blush); }
+  .badge-sky { background: rgba(122,175,196,0.15); color: var(--sky); }
+
+  .divider { height: 1px; background: var(--sand); margin: 20px 0; }
+
+  input[type="file"] { display: none; }
+
+  .today-date {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    margin-bottom: 20px;
+  }
+
+  /* WEEK GRID */
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .week-day-col { display: flex; flex-direction: column; gap: 4px; }
+  .week-day-header {
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 6px 0 4px;
+  }
+  .week-day-header.today-col { color: var(--paw); }
+  .week-day-date {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-light);
+    margin-bottom: 4px;
+  }
+  .week-dot-group { display: flex; flex-direction: column; gap: 3px; }
+  .week-dot {
+    border-radius: 6px;
+    padding: 3px 4px;
+    font-size: 0.65rem;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .week-dot-empty { background: rgba(232,213,188,0.3); color: transparent; border-radius: 6px; height: 20px; }
+  .week-dot-drink { background: rgba(122,175,196,0.2); color: #4a8eab; }
+  .week-dot-meal  { background: rgba(196,133,90,0.15); color: var(--paw); }
+  .week-dot-pee   { background: rgba(255,220,100,0.25); color: #a07a00; }
+  .week-dot-stool { background: rgba(139,102,69,0.12); color: var(--bark); }
+  .week-dot-bed   { background: rgba(212,135,122,0.2); color: var(--blush); }
+  .week-dot-walk  { background: rgba(122,158,126,0.2); color: var(--sage); }
+  .week-dot-med   { background: rgba(160,120,200,0.15); color: #8060b0; }
+  .week-dot-vomit { background: rgba(212,135,122,0.25); color: #b04040; }
+  .week-dot-sleep { background: rgba(100,130,200,0.15); color: #4060a0; }
+
+  @media (max-width: 600px) {
+    .week-grid { grid-template-columns: repeat(7,1fr); gap: 4px; }
+    .week-dot { font-size: 0.55rem; padding: 2px 2px; }
+  }
+
+  /* REMINDER BELL */
+  .reminder-item {
+    background: rgba(255,255,255,0.6);
+    border: 1px solid var(--sand);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  .reminder-item .rem-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .reminder-item .rem-info { flex: 1; }
+  .reminder-item .rem-name { font-weight: 600; font-size: 0.9rem; color: var(--dark-bark); }
+  .reminder-item .rem-detail { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
+  .reminder-item .rem-delete { background: none; border: none; color: var(--sand); cursor: pointer; font-size: 0.8rem; padding: 4px 8px; border-radius: 6px; transition: all 0.2s; }
+  .reminder-item .rem-delete:hover { background: #fee; color: var(--blush); }
+
+  /* JOURNAL */
+  .journal-entry {
+    background: rgba(255,255,255,0.6);
+    border: 1px solid var(--sand);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    animation: slideIn 0.3s ease;
+  }
+  .journal-entry-date { font-size: 0.75rem; color: var(--text-light); margin-bottom: 6px; }
+  .journal-entry-text { font-size: 0.9rem; color: var(--text); line-height: 1.6; white-space: pre-wrap; }
+  .journal-entry-delete { float: right; background: none; border: none; color: var(--sand); cursor: pointer; font-size: 0.8rem; padding: 2px 6px; border-radius: 6px; transition: all 0.2s; }
+  .journal-entry-delete:hover { background: #fee; color: var(--blush); }
+
+  /* NOTIFICATION TOAST */
+  #toastContainer {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toast {
+    background: var(--dark-bark);
+    color: white;
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 3.7s forwards;
+    max-width: 300px;
+  }
+  @keyframes toastIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes toastOut { to { opacity:0; transform:translateY(16px); } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-paw">🐾</span>
+      <div>
+        <div>Paw Journal</div>
+        <div class="dog-name-display" id="headerDogName">Set up your dog's profile →</div>
+      </div>
+    </div>
+    <button class="btn btn-outline" onclick="showSection('setup')" style="font-size:0.78rem;padding:7px 14px;">⚙️ Profile</button>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-inner">
+    <button class="nav-tab active" onclick="showSection('dashboard')">📊 Dashboard</button>
+    <button class="nav-tab" onclick="showSection('drinking')">💧 Drinking</button>
+    <button class="nav-tab" onclick="showSection('meals')">🍗 Meals</button>
+    <button class="nav-tab" onclick="showSection('meds')">💊 Meds & Vitamins</button>
+    <button class="nav-tab" onclick="showSection('stool')">💩 Stool</button>
+    <button class="nav-tab" onclick="showSection('peeing')">🚽 Peeing</button>
+    <button class="nav-tab" onclick="showSection('bedwetting')">🛏️ Bed Accidents</button>
+    <button class="nav-tab" onclick="showSection('walks')">🦮 Walks</button>
+    <button class="nav-tab" onclick="showSection('energy')">⚡ Energy & Mood</button>
+    <button class="nav-tab" onclick="showSection('weight')">⚖️ Weight</button>
+    <button class="nav-tab" onclick="showSection('patches')">🔬 Bald Patches</button>
+    <button class="nav-tab" onclick="showSection('teeth')">🦷 Teeth</button>
+    <button class="nav-tab" onclick="showSection('week')">🗓️ Week</button>
+    <button class="nav-tab" onclick="showSection('vomit')">🤢 Vomiting</button>
+    <button class="nav-tab" onclick="showSection('vet')">🩺 Vet Visits</button>
+    <button class="nav-tab" onclick="showSection('sleep')">💤 Sleep</button>
+    <button class="nav-tab" onclick="showSection('journal')">📝 Journal</button>
+    <button class="nav-tab" onclick="showSection('reminders')">🔔 Reminders</button>
+    <button class="nav-tab" onclick="showSection('trends')">📈 Trends</button>
+    <button class="nav-tab" onclick="showSection('setup')">🐕 Profile</button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ===== SETUP ===== -->
+  <div id="sec-setup" class="section">
+    <div class="setup-hero">
+      <span class="setup-paw">🐾</span>
+      <h1 class="section-header">Welcome to Paw Journal</h1>
+      <p class="section-sub">Let's set up your dog's health profile to get started.</p>
+    </div>
+    <div class="card" style="max-width:500px;margin:0 auto;">
+      <div class="card-title">🐕 Dog Profile</div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Dog's Name</label>
+        <input type="text" id="dogName" placeholder="e.g. Biscuit" oninput="updateDogName()">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Breed</label>
+          <input type="text" id="dogBreed" placeholder="e.g. Labrador">
+        </div>
+        <div class="form-group">
+          <label>Date of Birth</label>
+          <input type="date" id="dogDob">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Current Weight (kg)</label>
+          <input type="number" id="dogCurrentWeight" step="0.1" placeholder="e.g. 14.5">
+        </div>
+        <div class="form-group">
+          <label>Vet Name</label>
+          <input type="text" id="vetName" placeholder="Dr. Smith">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:20px;">
+        <label>Known Conditions / Notes</label>
+        <textarea id="dogNotes" placeholder="Any conditions, allergies, or notes..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="saveProfile()" style="width:100%">💾 Save Profile</button>
+    </div>
+
+    <div class="card" style="max-width:500px;margin:20px auto 0;">
+      <div class="card-title">🗄️ Backup & Restore Data</div>
+      <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:16px;line-height:1.6;">Export all your logged data to a file for safekeeping, or restore from a previous backup. Your data is stored on this device — backups protect against accidental loss.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-sage" onclick="exportData()" style="flex:1;">⬇️ Export Backup</button>
+        <button class="btn btn-outline" onclick="document.getElementById('importFile').click()" style="flex:1;">⬆️ Restore Backup</button>
+        <input type="file" id="importFile" accept=".json" onchange="importData(this)">
+      </div>
+      <p style="font-size:0.75rem;color:var(--text-light);margin-top:12px;">💡 Tip: Export a backup after every vet visit or weekly.</p>
+    </div>
+  </div>
+
+  <!-- ===== DASHBOARD ===== -->
+  <div id="sec-dashboard" class="section active">
+    <h1 class="section-header" id="dashTitle">Today's Overview</h1>
+    <p class="today-date" id="todayDate"></p>
+
+    <div class="grid-3" id="statsGrid" style="margin-bottom:24px;">
+      <div class="stat-box">
+        <div class="stat-value" id="statDrinking">0</div>
+        <div class="stat-label">💧 Total Water Today (ml)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="statMeals">0</div>
+        <div class="stat-label">🍗 Meals Today</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="statWalks">0</div>
+        <div class="stat-label">🦮 Walks Today</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="statPees">0</div>
+        <div class="stat-label">🚽 Pees Today</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="statStools">0</div>
+        <div class="stat-label">💩 Stools Today</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="statMeds">0</div>
+        <div class="stat-label">💊 Meds Today</div>
+      </div>
+    </div>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--dark-bark);margin-bottom:16px;">Recent Activity</h2>
+    <div id="recentFeed" class="log-list">
+      <div class="empty-state">No entries yet today. Start logging! 🐾</div>
+    </div>
+  </div>
+
+  <!-- ===== DRINKING ===== -->
+  <div id="sec-drinking" class="section">
+    <h1 class="section-header">💧 Water Intake</h1>
+    <p class="section-sub">Log every drinking session with the amount consumed.</p>
+
+    <div class="card">
+      <div class="card-title">Log Drinking Session</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Amount (ml)</label>
+          <input type="number" id="drinkAmount" placeholder="e.g. 200" min="1">
+        </div>
+        <div class="form-group">
+          <label>Time</label>
+          <input type="datetime-local" id="drinkTime">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Notes (optional)</label>
+        <input type="text" id="drinkNotes" placeholder="e.g. drank eagerly, left some">
+      </div>
+      <button class="btn btn-primary" onclick="logDrinking()">💧 Log Drink</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Today's Total: <span id="drinkTodayTotal" style="color:var(--paw)">0 ml</span></div>
+      <div id="drinkLog" class="log-list"><div class="empty-state">No drinks logged yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== MEALS ===== -->
+  <div id="sec-meals" class="section">
+    <h1 class="section-header">🍗 Meals</h1>
+    <p class="section-sub">Track what and how much your dog is eating.</p>
+
+    <div class="card">
+      <div class="card-title">Log a Meal</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Food Description</label>
+          <input type="text" id="mealFood" placeholder="e.g. Dry kibble - Royal Canin">
+        </div>
+        <div class="form-group">
+          <label>Amount (g or cups)</label>
+          <input type="text" id="mealAmount" placeholder="e.g. 200g">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Time</label>
+          <input type="datetime-local" id="mealTime">
+        </div>
+        <div class="form-group">
+          <label>Appetite</label>
+          <select id="mealAppetite">
+            <option value="">Select...</option>
+            <option>Ate everything eagerly</option>
+            <option>Ate most of it</option>
+            <option>Ate about half</option>
+            <option>Picked at it</option>
+            <option>Refused food</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Notes</label>
+        <input type="text" id="mealNotes" placeholder="e.g. added chicken topper, vomited after">
+      </div>
+      <button class="btn btn-primary" onclick="logMeal()">🍗 Log Meal</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Meal History</div>
+      <div id="mealLog" class="log-list"><div class="empty-state">No meals logged yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== MEDS ===== -->
+  <div id="sec-meds" class="section">
+    <h1 class="section-header">💊 Medications & Vitamins</h1>
+    <p class="section-sub">Log all medications, supplements, and vitamins with dosage.</p>
+
+    <div class="card">
+      <div class="card-title">Log Medication / Supplement</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="medName" placeholder="e.g. Apoquel, Omega-3">
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="medType">
+            <option value="Medication">Medication</option>
+            <option value="Vitamin">Vitamin</option>
+            <option value="Supplement">Supplement</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Dose & Unit</label>
+          <input type="text" id="medDose" placeholder="e.g. 16mg / 2 tablets / 5ml">
+        </div>
+        <div class="form-group">
+          <label>Time Given</label>
+          <input type="datetime-local" id="medTime">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Notes</label>
+        <input type="text" id="medNotes" placeholder="e.g. given with food, dog refused">
+      </div>
+      <button class="btn btn-primary" onclick="logMed()">💊 Log</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Medication Log</div>
+      <div id="medLog" class="log-list"><div class="empty-state">No medications logged yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== STOOL ===== -->
+  <div id="sec-stool" class="section">
+    <h1 class="section-header">💩 Stool Log</h1>
+    <p class="section-sub">Track stool frequency, consistency, and any concerns.</p>
+
+    <div class="card">
+      <div class="card-title">Log Stool</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Time</label>
+          <input type="datetime-local" id="stoolTime">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Consistency</label>
+        <div class="pill-group" id="stoolConsistency">
+          <button class="pill" onclick="selectPill(this,'stoolConsistency')">Firm ✅</button>
+          <button class="pill" onclick="selectPill(this,'stoolConsistency')">Soft</button>
+          <button class="pill" onclick="selectPill(this,'stoolConsistency')">Mushy</button>
+          <button class="pill" onclick="selectPill(this,'stoolConsistency')">Watery / Diarrhea ⚠️</button>
+          <button class="pill" onclick="selectPill(this,'stoolConsistency')">Constipated</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Colour</label>
+        <div class="pill-group" id="stoolColor">
+          <button class="pill" onclick="selectPill(this,'stoolColor')">Brown (normal)</button>
+          <button class="pill" onclick="selectPill(this,'stoolColor')">Dark / Black ⚠️</button>
+          <button class="pill" onclick="selectPill(this,'stoolColor')">Red / Blood ⚠️</button>
+          <button class="pill" onclick="selectPill(this,'stoolColor')">Yellow</button>
+          <button class="pill" onclick="selectPill(this,'stoolColor')">Green</button>
+          <button class="pill" onclick="selectPill(this,'stoolColor')">Grey</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Concerns (select all that apply)</label>
+        <div class="pill-group" id="stoolConcerns">
+          <button class="pill multi" onclick="togglePill(this)">Mucus</button>
+          <button class="pill multi" onclick="togglePill(this)">Blood</button>
+          <button class="pill multi" onclick="togglePill(this)">Worms</button>
+          <button class="pill multi" onclick="togglePill(this)">Straining</button>
+          <button class="pill multi" onclick="togglePill(this)">None</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Additional Notes</label>
+        <textarea id="stoolNotes" placeholder="Any other details..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="logStool()">💩 Log Stool</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Stool History</div>
+      <div id="stoolLog" class="log-list"><div class="empty-state">No stool logged yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== PEEING ===== -->
+  <div id="sec-peeing" class="section">
+    <h1 class="section-header">🚽 Urination</h1>
+    <p class="section-sub">Track peeing habits, volume, and any concerns.</p>
+
+    <div class="card">
+      <div class="card-title">Log Urination</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Time</label>
+          <input type="datetime-local" id="peeTime">
+        </div>
+        <div class="form-group">
+          <label>Location</label>
+          <select id="peeLocation">
+            <option>Outside (normal)</option>
+            <option>Inside (accident)</option>
+            <option>In bed / sleeping area</option>
+            <option>During walk</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Volume</label>
+        <div class="pill-group" id="peeVolume">
+          <button class="pill" onclick="selectPill(this,'peeVolume')">Small drip</button>
+          <button class="pill" onclick="selectPill(this,'peeVolume')">Small</button>
+          <button class="pill" onclick="selectPill(this,'peeVolume')">Medium</button>
+          <button class="pill" onclick="selectPill(this,'peeVolume')">Large</button>
+          <button class="pill" onclick="selectPill(this,'peeVolume')">Very large</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Urine Colour</label>
+        <div class="pill-group" id="peeColor">
+          <button class="pill" onclick="selectPill(this,'peeColor')">Pale yellow (normal)</button>
+          <button class="pill" onclick="selectPill(this,'peeColor')">Dark yellow</button>
+          <button class="pill" onclick="selectPill(this,'peeColor')">Orange ⚠️</button>
+          <button class="pill" onclick="selectPill(this,'peeColor')">Brown ⚠️</button>
+          <button class="pill" onclick="selectPill(this,'peeColor')">Pink/Red ⚠️</button>
+          <button class="pill" onclick="selectPill(this,'peeColor')">Cloudy ⚠️</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Urine Concentration</label>
+        <div class="pill-group" id="peeConcentration">
+          <button class="pill" onclick="selectPill(this,'peeConcentration')">Very dilute (almost clear)</button>
+          <button class="pill" onclick="selectPill(this,'peeConcentration')">Dilute (pale)</button>
+          <button class="pill" onclick="selectPill(this,'peeConcentration')">Normal</button>
+          <button class="pill" onclick="selectPill(this,'peeConcentration')">Concentrated (dark) ⚠️</button>
+          <button class="pill" onclick="selectPill(this,'peeConcentration')">Very concentrated ⚠️</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Notes (straining, dripping, smell etc.)</label>
+        <textarea id="peeNotes" placeholder="e.g. strained a lot, strong smell..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="logPee()">🚽 Log Pee</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Urination History</div>
+      <div id="peeLog" class="log-list"><div class="empty-state">No urination logged yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== BED WETTING ===== -->
+  <div id="sec-bedwetting" class="section">
+    <h1 class="section-header">🛏️ Bed Accidents</h1>
+    <p class="section-sub">Track nighttime or sleep accidents with size reference.</p>
+
+    <div class="card">
+      <div class="card-title">Log Bed Accident</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Time Noticed</label>
+          <input type="datetime-local" id="bedTime">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Size of Wet Patch</label>
+        <div class="pill-group" id="bedSize">
+          <button class="pill" onclick="selectPill(this,'bedSize')">Tiny (coin-sized)</button>
+          <button class="pill" onclick="selectPill(this,'bedSize')">Small (palm-sized)</button>
+          <button class="pill" onclick="selectPill(this,'bedSize')">Medium (hand-sized) 🖐️</button>
+          <button class="pill" onclick="selectPill(this,'bedSize')">Large (A4 paper)</button>
+          <button class="pill" onclick="selectPill(this,'bedSize')">Very large (soaked)</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Was dog awake or asleep?</label>
+        <div class="pill-group" id="bedState">
+          <button class="pill" onclick="selectPill(this,'bedState')">Asleep (unaware)</button>
+          <button class="pill" onclick="selectPill(this,'bedState')">Woke up to pee</button>
+          <button class="pill" onclick="selectPill(this,'bedState')">Unsure</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Notes</label>
+        <textarea id="bedNotes" placeholder="Any other details..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="logBed()">🛏️ Log Accident</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Accident History</div>
+      <div id="bedLog" class="log-list"><div class="empty-state">No accidents logged yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== WALKS ===== -->
+  <div id="sec-walks" class="section">
+    <h1 class="section-header">🦮 Walks</h1>
+    <p class="section-sub">Track exercise, duration, and how your dog did.</p>
+
+    <div class="card">
+      <div class="card-title">Log a Walk</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Time</label>
+          <input type="datetime-local" id="walkTime">
+        </div>
+        <div class="form-group">
+          <label>Duration (minutes)</label>
+          <input type="number" id="walkDuration" placeholder="e.g. 30" min="1">
+        </div>
+        <div class="form-group">
+          <label>Distance (km, optional)</label>
+          <input type="number" id="walkDistance" placeholder="e.g. 1.5" step="0.1">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Energy Level on Walk</label>
+        <div class="pill-group" id="walkEnergy">
+          <button class="pill" onclick="selectPill(this,'walkEnergy')">Lethargic / slow</button>
+          <button class="pill" onclick="selectPill(this,'walkEnergy')">Calm</button>
+          <button class="pill" onclick="selectPill(this,'walkEnergy')">Normal</button>
+          <button class="pill" onclick="selectPill(this,'walkEnergy')">Energetic</button>
+          <button class="pill" onclick="selectPill(this,'walkEnergy')">Very energetic</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Notes</label>
+        <input type="text" id="walkNotes" placeholder="e.g. limped slightly, sniffed a lot">
+      </div>
+      <button class="btn btn-primary" onclick="logWalk()">🦮 Log Walk</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Walk History</div>
+      <div id="walkLog" class="log-list"><div class="empty-state">No walks logged yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== ENERGY & MOOD ===== -->
+  <div id="sec-energy" class="section">
+    <h1 class="section-header">⚡ Energy & Mood</h1>
+    <p class="section-sub">Log your dog's overall energy and behavioural observations.</p>
+
+    <div class="card">
+      <div class="card-title">Log Energy & Mood Check-in</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Time</label>
+          <input type="datetime-local" id="moodTime">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Energy Level: <span id="energyVal">5</span>/10</label>
+        <input type="range" id="energySlider" min="1" max="10" value="5" oninput="document.getElementById('energyVal').textContent=this.value">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Mood</label>
+        <div class="pill-group" id="moodSelect">
+          <button class="pill" onclick="selectPill(this,'moodSelect')">😊 Happy</button>
+          <button class="pill" onclick="selectPill(this,'moodSelect')">😐 Neutral</button>
+          <button class="pill" onclick="selectPill(this,'moodSelect')">😟 Anxious</button>
+          <button class="pill" onclick="selectPill(this,'moodSelect')">😴 Sleepy / lethargic</button>
+          <button class="pill" onclick="selectPill(this,'moodSelect')">😖 In discomfort</button>
+          <button class="pill" onclick="selectPill(this,'moodSelect')">😠 Irritable</button>
+          <button class="pill" onclick="selectPill(this,'moodSelect')">🤩 Playful</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Behaviours Observed</label>
+        <div class="pill-group" id="moodBehaviours">
+          <button class="pill multi" onclick="togglePill(this)">Scratching</button>
+          <button class="pill multi" onclick="togglePill(this)">Licking self</button>
+          <button class="pill multi" onclick="togglePill(this)">Whimpering</button>
+          <button class="pill multi" onclick="togglePill(this)">Panting</button>
+          <button class="pill multi" onclick="togglePill(this)">Shaking</button>
+          <button class="pill multi" onclick="togglePill(this)">Restless</button>
+          <button class="pill multi" onclick="togglePill(this)">Hiding</button>
+          <button class="pill multi" onclick="togglePill(this)">Seeking comfort</button>
+          <button class="pill multi" onclick="togglePill(this)">Playing normally</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Notes</label>
+        <textarea id="moodNotes" placeholder="Anything else you noticed..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="logMood()">⚡ Log Check-in</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Energy & Mood History</div>
+      <div id="moodLog" class="log-list"><div class="empty-state">No check-ins yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== WEIGHT ===== -->
+  <div id="sec-weight" class="section">
+    <h1 class="section-header">⚖️ Weight Tracking</h1>
+    <p class="section-sub">Monitor weight changes over time.</p>
+
+    <div class="card">
+      <div class="card-title">Log Weight</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Weight (kg)</label>
+          <input type="number" id="weightVal" step="0.1" placeholder="e.g. 14.2">
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="weightDate">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Notes</label>
+        <input type="text" id="weightNotes" placeholder="e.g. after breakfast, vet scale">
+      </div>
+      <button class="btn btn-primary" onclick="logWeight()">⚖️ Log Weight</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Weight History</div>
+      <div id="weightChart" style="margin-bottom:8px;"></div>
+      <div id="weightLog" class="log-list"><div class="empty-state">No weight entries yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== BALD PATCHES ===== -->
+  <div id="sec-patches" class="section">
+    <h1 class="section-header">🔬 Bald Patches & Skin</h1>
+    <p class="section-sub">Document and track bald patches with photos and descriptions.</p>
+
+    <div class="card">
+      <div class="card-title">Log Bald Patch Observation</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="patchDate">
+        </div>
+        <div class="form-group">
+          <label>Location on Body</label>
+          <input type="text" id="patchLocation" placeholder="e.g. left side, near tail, belly">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Size</label>
+        <div class="pill-group" id="patchSize">
+          <button class="pill" onclick="selectPill(this,'patchSize')">Tiny (coin)</button>
+          <button class="pill" onclick="selectPill(this,'patchSize')">Small (palm)</button>
+          <button class="pill" onclick="selectPill(this,'patchSize')">Medium (hand)</button>
+          <button class="pill" onclick="selectPill(this,'patchSize')">Large</button>
+          <button class="pill" onclick="selectPill(this,'patchSize')">Multiple patches</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Change since last observation</label>
+        <div class="pill-group" id="patchChange">
+          <button class="pill" onclick="selectPill(this,'patchChange')">New patch</button>
+          <button class="pill" onclick="selectPill(this,'patchChange')">Growing ⚠️</button>
+          <button class="pill" onclick="selectPill(this,'patchChange')">Same size</button>
+          <button class="pill" onclick="selectPill(this,'patchChange')">Shrinking ✅</button>
+          <button class="pill" onclick="selectPill(this,'patchChange')">Hair regrowing ✅</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Photos</label>
+        <div class="photo-upload-area" onclick="document.getElementById('patchPhotoInput').click()">
+          📷 Tap to add photos
+          <br><small style="color:var(--text-light);margin-top:4px;display:block;">Compare over time</small>
+        </div>
+        <input type="file" id="patchPhotoInput" accept="image/*" multiple onchange="addPhotos(this,'patchPhotos')">
+        <div class="photo-preview-grid" id="patchPhotos"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Notes</label>
+        <textarea id="patchNotes" placeholder="Is the skin red, flaky, scabby? Is the dog scratching it?"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="logPatch()">🔬 Log Observation</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Bald Patch History</div>
+      <div id="patchLog" class="log-list"><div class="empty-state">No patch observations yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== TEETH ===== -->
+  <div id="sec-teeth" class="section">
+    <h1 class="section-header">🦷 Teeth & Dental Health</h1>
+    <p class="section-sub">Track dental hygiene and any concerns.</p>
+
+    <div class="card">
+      <div class="card-title">Log Teeth Observation</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="teethDate">
+        </div>
+        <div class="form-group">
+          <label>Teeth Cleaned Today?</label>
+          <select id="teethCleaned">
+            <option value="">Select...</option>
+            <option>Yes - brushed</option>
+            <option>Yes - dental chew</option>
+            <option>Yes - water additive</option>
+            <option>Not today</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Concerns</label>
+        <div class="pill-group" id="teethConcerns">
+          <button class="pill multi" onclick="togglePill(this)">Bad breath</button>
+          <button class="pill multi" onclick="togglePill(this)">Tartar buildup</button>
+          <button class="pill multi" onclick="togglePill(this)">Red/swollen gums</button>
+          <button class="pill multi" onclick="togglePill(this)">Bleeding gums</button>
+          <button class="pill multi" onclick="togglePill(this)">Broken/chipped tooth</button>
+          <button class="pill multi" onclick="togglePill(this)">Pawing at mouth</button>
+          <button class="pill multi" onclick="togglePill(this)">Difficulty eating</button>
+          <button class="pill multi" onclick="togglePill(this)">None ✅</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Photos</label>
+        <div class="photo-upload-area" onclick="document.getElementById('teethPhotoInput').click()">
+          📷 Tap to add photos
+        </div>
+        <input type="file" id="teethPhotoInput" accept="image/*" multiple onchange="addPhotos(this,'teethPhotos')">
+        <div class="photo-preview-grid" id="teethPhotos"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Notes</label>
+        <textarea id="teethNotes" placeholder="Any other observations..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="logTeeth()">🦷 Log Observation</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Dental History</div>
+      <div id="teethLog" class="log-list"><div class="empty-state">No dental entries yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== TRENDS ===== -->
+  <div id="sec-trends" class="section">
+    <h1 class="section-header">📈 Trends & Insights</h1>
+    <p class="section-sub">Spot patterns and correlations in your dog's health data.</p>
+
+  <!-- ===== TRENDS & ANALYTICS ===== -->
+  <div id="sec-trends" class="section">
+    <h1 class="section-header">📈 Trends & Analytics</h1>
+    <p class="section-sub">Patterns, correlations, week comparisons and monthly overviews.</p>
+
+    <!-- Tab bar inside trends -->
+    <div style="display:flex;gap:4px;margin-bottom:24px;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="trendTab-correlations" onclick="showTrendTab('correlations')" style="font-size:0.8rem;padding:8px 16px;">🔗 Correlations</button>
+      <button class="btn btn-outline" id="trendTab-charts" onclick="showTrendTab('charts')" style="font-size:0.8rem;padding:8px 16px;">📊 Charts</button>
+      <button class="btn btn-outline" id="trendTab-weekcompare" onclick="showTrendTab('weekcompare')" style="font-size:0.8rem;padding:8px 16px;">↔️ Week Compare</button>
+      <button class="btn btn-outline" id="trendTab-month" onclick="showTrendTab('month')" style="font-size:0.8rem;padding:8px 16px;">🗓️ Month View</button>
+    </div>
+
+    <!-- CORRELATIONS TAB -->
+    <div id="trendPanel-correlations">
+      <div class="trend-card">
+        <h3 style="font-family:'Playfair Display',serif;color:var(--dark-bark);margin-bottom:6px;">🔗 Correlation Insights</h3>
+        <p style="font-size:0.82rem;color:var(--text-light);margin-bottom:16px;">Based on your logged data — patterns detected automatically.</p>
+        <div id="insightsContainer"><div class="empty-state">Log more data to see correlations appear here.</div></div>
+      </div>
+      <div class="trend-card">
+        <h3 style="font-family:'Playfair Display',serif;color:var(--dark-bark);margin-bottom:16px;">📊 7-Day Summary</h3>
+        <div id="weekSummary"></div>
+      </div>
+    </div>
+
+    <!-- CHARTS TAB -->
+    <div id="trendPanel-charts" style="display:none;">
+      <div class="trend-card">
+        <h3 style="font-family:'Playfair Display',serif;color:var(--dark-bark);margin-bottom:16px;">💧 Water Intake — Last 14 Days</h3>
+        <div id="waterTrendChart"></div>
+      </div>
+      <div class="trend-card">
+        <h3 style="font-family:'Playfair Display',serif;color:var(--dark-bark);margin-bottom:16px;">🛏️ Bed Accidents — Last 14 Days</h3>
+        <div id="bedTrendChart"></div>
+      </div>
+      <div class="trend-card">
+        <h3 style="font-family:'Playfair Display',serif;color:var(--dark-bark);margin-bottom:16px;">🚽 Daily Pee Count — Last 14 Days</h3>
+        <div id="peeTrendChart"></div>
+      </div>
+      <div class="trend-card">
+        <h3 style="font-family:'Playfair Display',serif;color:var(--dark-bark);margin-bottom:16px;">⚡ Energy Level — Last 14 Days</h3>
+        <div id="energyTrendChart"></div>
+      </div>
+      <div class="trend-card">
+        <h3 style="font-family:'Playfair Display',serif;color:var(--dark-bark);margin-bottom:16px;">🤢 Vomiting Episodes — Last 14 Days</h3>
+        <div id="vomitTrendChart"></div>
+      </div>
+    </div>
+
+    <!-- WEEK COMPARE TAB -->
+    <div id="trendPanel-weekcompare" style="display:none;">
+      <div class="trend-card">
+        <h3 style="font-family:'Playfair Display',serif;color:var(--dark-bark);margin-bottom:6px;">↔️ Week Comparison</h3>
+        <p style="font-size:0.82rem;color:var(--text-light);margin-bottom:16px;">Compare two weeks side by side to spot changes.</p>
+        <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+          <div class="form-group" style="flex:1;min-width:140px;">
+            <label>Week A</label>
+            <select id="weekCompareA" onchange="renderWeekCompare()"></select>
+          </div>
+          <div class="form-group" style="flex:1;min-width:140px;">
+            <label>Week B</label>
+            <select id="weekCompareB" onchange="renderWeekCompare()"></select>
+          </div>
+        </div>
+        <div id="weekCompareOutput"></div>
+      </div>
+    </div>
+
+    <!-- MONTH VIEW TAB -->
+    <div id="trendPanel-month" style="display:none;">
+      <div class="trend-card">
+        <h3 style="font-family:'Playfair Display',serif;color:var(--dark-bark);margin-bottom:16px;">🗓️ Month View</h3>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
+          <button class="btn btn-outline" onclick="shiftMonth(-1)" style="font-size:0.8rem;padding:8px 14px;">← Prev</button>
+          <span id="monthLabel" style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--dark-bark);flex:1;text-align:center;"></span>
+          <button class="btn btn-outline" onclick="shiftMonth(1)" id="monthNextBtn" style="font-size:0.8rem;padding:8px 14px;">Next →</button>
+        </div>
+        <div id="monthCalendar" style="overflow-x:auto;"></div>
+        <div id="monthTotals" style="margin-top:20px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== WEEK OVERVIEW ===== -->
+  <div id="sec-week" class="section">
+    <h1 class="section-header">🗓️ Week Overview</h1>
+    <p class="section-sub" id="weekRangeLabel">At-a-glance view of everything logged this week.</p>
+
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+      <button class="btn btn-outline" onclick="shiftWeek(-1)">← Previous week</button>
+      <button class="btn btn-outline" onclick="shiftWeek(1)" id="weekNextBtn">Next week →</button>
+      <button class="btn btn-outline" onclick="goToCurrentWeek()">Today</button>
+    </div>
+
+    <div class="card" style="overflow-x:auto;">
+      <div id="weekGridContainer"></div>
+      <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;" id="weekLegend"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Week Totals</div>
+      <div id="weekTotals" class="grid-3" style="gap:12px;"></div>
+    </div>
+  </div>
+
+  <!-- ===== VOMITING ===== -->
+  <div id="sec-vomit" class="section">
+    <h1 class="section-header">🤢 Vomiting Log</h1>
+    <p class="section-sub">Track vomiting episodes — timing, contents, and possible triggers.</p>
+
+    <div class="card">
+      <div class="card-title">Log Vomiting Episode</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Time</label>
+          <input type="datetime-local" id="vomitTime">
+        </div>
+        <div class="form-group">
+          <label>Timing</label>
+          <select id="vomitTiming">
+            <option value="">Select...</option>
+            <option>Immediately after eating</option>
+            <option>1–2 hours after eating</option>
+            <option>Long after eating / empty stomach</option>
+            <option>Shortly after drinking water</option>
+            <option>After drinking a large amount of water</option>
+            <option>During walk / exercise</option>
+            <option>No obvious trigger</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Contents</label>
+        <div class="pill-group" id="vomitContents">
+          <button class="pill multi" onclick="togglePill(this)">Undigested food</button>
+          <button class="pill multi" onclick="togglePill(this)">Partially digested food</button>
+          <button class="pill multi" onclick="togglePill(this)">Yellow bile ⚠️</button>
+          <button class="pill multi" onclick="togglePill(this)">White foam</button>
+          <button class="pill multi" onclick="togglePill(this)">Blood ⚠️</button>
+          <button class="pill multi" onclick="togglePill(this)">Grass / plant matter</button>
+          <button class="pill multi" onclick="togglePill(this)">Foreign object ⚠️</button>
+          <button class="pill multi" onclick="togglePill(this)">Clear liquid</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Frequency this episode</label>
+        <div class="pill-group" id="vomitFreq">
+          <button class="pill" onclick="selectPill(this,'vomitFreq')">Once</button>
+          <button class="pill" onclick="selectPill(this,'vomitFreq')">2–3 times</button>
+          <button class="pill" onclick="selectPill(this,'vomitFreq')">4+ times ⚠️</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Notes (possible trigger, recent diet changes etc.)</label>
+        <textarea id="vomitNotes" placeholder="e.g. ate grass earlier, new food introduced yesterday..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="logVomit()">🤢 Log Episode</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Vomiting History</div>
+      <div id="vomitLog" class="log-list"><div class="empty-state">No vomiting episodes logged.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== VET VISITS ===== -->
+  <div id="sec-vet" class="section">
+    <h1 class="section-header">🩺 Vet Visits</h1>
+    <p class="section-sub">Log appointments, diagnoses, tests, and follow-ups.</p>
+
+    <div class="card">
+      <div class="card-title">Log Vet Visit</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="vetDate">
+        </div>
+        <div class="form-group">
+          <label>Vet / Clinic Name</label>
+          <input type="text" id="vetClinic" placeholder="e.g. City Vets — Dr. Patel">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Reason for Visit</label>
+        <input type="text" id="vetReason" placeholder="e.g. routine check-up, skin concern, follow-up">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Diagnosis / Findings</label>
+        <textarea id="vetDiagnosis" placeholder="What did the vet say?"></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Tests / Procedures Carried Out</label>
+        <textarea id="vetTests" placeholder="e.g. blood test, urinalysis, skin scrape, X-ray..."></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Medications / Treatment Prescribed</label>
+        <textarea id="vetMeds" placeholder="e.g. Apoquel 16mg twice daily for 14 days..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Weight at Visit (kg)</label>
+          <input type="number" id="vetWeight" step="0.1" placeholder="e.g. 14.2">
+        </div>
+        <div class="form-group">
+          <label>Next Appointment</label>
+          <input type="date" id="vetNextAppt">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Additional Notes</label>
+        <textarea id="vetNotes" placeholder="Anything else to remember..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="logVet()">🩺 Log Visit</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Vet Visit History</div>
+      <div id="vetLog" class="log-list"><div class="empty-state">No vet visits logged yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== SLEEP ===== -->
+  <div id="sec-sleep" class="section">
+    <h1 class="section-header">💤 Sleep Quality</h1>
+    <p class="section-sub">Track how well your dog is sleeping each night.</p>
+
+    <div class="card">
+      <div class="card-title">Log Sleep</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date (morning of)</label>
+          <input type="date" id="sleepDate">
+        </div>
+        <div class="form-group">
+          <label>Approx. Hours Slept</label>
+          <input type="number" id="sleepHours" step="0.5" placeholder="e.g. 9" min="0" max="24">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Sleep Quality: <span id="sleepQualVal">5</span>/10</label>
+        <input type="range" id="sleepQualSlider" min="1" max="10" value="5" oninput="document.getElementById('sleepQualVal').textContent=this.value">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Disturbances</label>
+        <div class="pill-group" id="sleepDisturbances">
+          <button class="pill multi" onclick="togglePill(this)">Woke frequently</button>
+          <button class="pill multi" onclick="togglePill(this)">Restless / twitching</button>
+          <button class="pill multi" onclick="togglePill(this)">Whimpering in sleep</button>
+          <button class="pill multi" onclick="togglePill(this)">Got up to drink</button>
+          <button class="pill multi" onclick="togglePill(this)">Got up to pee</button>
+          <button class="pill multi" onclick="togglePill(this)">Snored heavily</button>
+          <button class="pill multi" onclick="togglePill(this)">Slept soundly ✅</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Notes</label>
+        <textarea id="sleepNotes" placeholder="e.g. seemed unsettled, kept changing positions..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="logSleep()">💤 Log Sleep</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Sleep History</div>
+      <div id="sleepLog" class="log-list"><div class="empty-state">No sleep entries yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== JOURNAL ===== -->
+  <div id="sec-journal" class="section">
+    <h1 class="section-header">📝 Daily Journal</h1>
+    <p class="section-sub">Free-text notes for anything that doesn't fit elsewhere.</p>
+
+    <div class="card">
+      <div class="card-title">New Journal Entry</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="journalDate">
+        </div>
+        <div class="form-group">
+          <label>Mood Tag</label>
+          <select id="journalTag">
+            <option value="">No tag</option>
+            <option value="🟢 Good day">🟢 Good day</option>
+            <option value="🟡 Mixed day">🟡 Mixed day</option>
+            <option value="🔴 Concerning day">🔴 Concerning day</option>
+            <option value="💊 Medication change">💊 Medication change</option>
+            <option value="🩺 Post-vet">🩺 Post-vet</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Notes</label>
+        <textarea id="journalText" style="min-height:120px;" placeholder="Write anything here — how your dog seemed today, any changes you noticed, things to mention at the next vet visit..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="logJournal()">📝 Save Entry</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Journal History</div>
+      <div id="journalLog"><div class="empty-state">No journal entries yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== REMINDERS ===== -->
+  <div id="sec-reminders" class="section">
+    <h1 class="section-header">🔔 Medication Reminders</h1>
+    <p class="section-sub">Set up recurring reminders so you never miss a dose.</p>
+
+    <div class="card">
+      <div class="card-title">Add Reminder</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Medication / Supplement Name</label>
+          <input type="text" id="remName" placeholder="e.g. Apoquel, Omega-3">
+        </div>
+        <div class="form-group">
+          <label>Dose</label>
+          <input type="text" id="remDose" placeholder="e.g. 16mg / 2 tablets">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Frequency</label>
+          <select id="remFreq">
+            <option value="daily">Once daily</option>
+            <option value="twice">Twice daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="custom">Custom note</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Reminder Time</label>
+          <input type="time" id="remTime" value="08:00">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Notes</label>
+        <input type="text" id="remNotes" placeholder="e.g. give with food">
+      </div>
+      <button class="btn btn-primary" onclick="addReminder()">🔔 Add Reminder</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Active Reminders</div>
+      <p style="font-size:0.82rem;color:var(--text-light);margin-bottom:16px;">
+        💡 Reminders are shown here as a reference. Enable browser notifications below to get alerted at the right time.
+      </p>
+      <button class="btn btn-sage" onclick="requestNotifPermission()" id="notifBtn" style="margin-bottom:16px;">🔔 Enable Browser Notifications</button>
+      <div id="reminderList"><div class="empty-state">No reminders set up yet.</div></div>
+    </div>
+  </div>
+
+</main>
+
+<div id="toastContainer"></div>
+
+<script>
+// ====== DATA STORE ======
+const store = {
+  profile: JSON.parse(localStorage.getItem('pawProfile') || '{}'),
+  drinking: JSON.parse(localStorage.getItem('pawDrinking') || '[]'),
+  meals: JSON.parse(localStorage.getItem('pawMeals') || '[]'),
+  meds: JSON.parse(localStorage.getItem('pawMeds') || '[]'),
+  stool: JSON.parse(localStorage.getItem('pawStool') || '[]'),
+  peeing: JSON.parse(localStorage.getItem('pawPeeing') || '[]'),
+  bedwetting: JSON.parse(localStorage.getItem('pawBedwetting') || '[]'),
+  walks: JSON.parse(localStorage.getItem('pawWalks') || '[]'),
+  mood: JSON.parse(localStorage.getItem('pawMood') || '[]'),
+  weight: JSON.parse(localStorage.getItem('pawWeight') || '[]'),
+  patches: JSON.parse(localStorage.getItem('pawPatches') || '[]'),
+  teeth: JSON.parse(localStorage.getItem('pawTeeth') || '[]'),
+  vomit: JSON.parse(localStorage.getItem('pawVomit') || '[]'),
+  vet: JSON.parse(localStorage.getItem('pawVet') || '[]'),
+  sleep: JSON.parse(localStorage.getItem('pawSleep') || '[]'),
+  journal: JSON.parse(localStorage.getItem('pawJournal') || '[]'),
+  reminders: JSON.parse(localStorage.getItem('pawReminders') || '[]'),
+};
+
+function save(key) {
+  localStorage.setItem('paw' + key.charAt(0).toUpperCase() + key.slice(1), JSON.stringify(store[key]));
+}
+
+// ====== NAVIGATION ======
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  const sec = document.getElementById('sec-' + name);
+  if (sec) sec.classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    const txt = t.textContent.toLowerCase();
+    if (
+      (name === 'dashboard' && txt.includes('dashboard')) ||
+      (name === 'week' && txt.includes('week')) ||
+      (name === 'drinking' && txt.includes('drinking')) ||
+      (name === 'meals' && txt.includes('meals')) ||
+      (name === 'meds' && txt.includes('meds')) ||
+      (name === 'stool' && txt.includes('stool')) ||
+      (name === 'peeing' && txt.includes('peeing')) ||
+      (name === 'bedwetting' && txt.includes('bed')) ||
+      (name === 'walks' && txt.includes('walks')) ||
+      (name === 'energy' && txt.includes('energy')) ||
+      (name === 'weight' && txt.includes('weight')) ||
+      (name === 'patches' && txt.includes('patches')) ||
+      (name === 'teeth' && txt.includes('teeth')) ||
+      (name === 'vomit' && txt.includes('vomit')) ||
+      (name === 'vet' && txt.includes('vet')) ||
+      (name === 'sleep' && txt.includes('sleep')) ||
+      (name === 'journal' && txt.includes('journal')) ||
+      (name === 'reminders' && txt.includes('remind')) ||
+      (name === 'trends' && txt.includes('trends')) ||
+      (name === 'setup' && txt.includes('profile'))
+    ) { t.classList.add('active'); }
+  });
+  if (name === 'dashboard') updateDashboard();
+  if (name === 'trends') updateTrends();
+  if (name === 'week') renderWeekGrid();
+  if (name === 'setup') loadProfile();
+}
+
+// ====== HELPERS ======
+function now() {
+  const d = new Date();
+  return d.toISOString().slice(0,16);
+}
+
+function formatTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return d.toLocaleString('en-GB', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+
+function isToday(ts) {
+  if (!ts) return false;
+  const d = new Date(ts);
+  const t = new Date();
+  return d.toDateString() === t.toDateString();
+}
+
+function getSelectedPill(groupId) {
+  const sel = document.querySelector(`#${groupId} .pill.selected:not(.multi)`);
+  return sel ? sel.textContent.replace(/[⚠️✅]/g,'').trim() : '';
+}
+
+function getSelectedPills(groupId) {
+  return Array.from(document.querySelectorAll(`#${groupId} .pill.multi.selected`))
+    .map(p => p.textContent.replace(/[⚠️✅]/g,'').trim());
+}
+
+function selectPill(el, groupId) {
+  document.querySelectorAll(`#${groupId} .pill:not(.multi)`).forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function togglePill(el) { el.classList.toggle('selected'); }
+
+function clearPills(groupId) {
+  document.querySelectorAll(`#${groupId} .pill`).forEach(p => p.classList.remove('selected'));
+}
+
+function makeEntry(icon, title, detail, time, onDelete) {
+  const div = document.createElement('div');
+  div.className = 'log-entry';
+  div.innerHTML = `
+    <div class="log-entry-icon">${icon}</div>
+    <div class="log-entry-content">
+      <div class="log-entry-title">${title}</div>
+      ${detail ? `<div class="log-entry-detail">${detail}</div>` : ''}
+    </div>
+    <div class="log-entry-time">${formatTime(time)}</div>
+    <button class="log-entry-delete" onclick="(${onDelete})(this.closest('.log-entry'))">✕</button>
+  `;
+  return div;
+}
+
+function renderList(containerId, entries, renderFn) {
+  const cont = document.getElementById(containerId);
+  cont.innerHTML = '';
+  if (!entries.length) {
+    cont.innerHTML = '<div class="empty-state">No entries yet.</div>';
+    return;
+  }
+  [...entries].reverse().forEach((e, i) => {
+    const realIdx = entries.length - 1 - i;
+    cont.appendChild(renderFn(e, realIdx));
+  });
+}
+
+function addPhotos(input, previewId) {
+  const preview = document.getElementById(previewId);
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.createElement('img');
+      img.className = 'photo-thumb';
+      img.src = e.target.result;
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function getPhotos(previewId) {
+  return Array.from(document.querySelectorAll(`#${previewId} img`)).map(i => i.src);
+}
+
+// ====== PROFILE ======
+function loadProfile() {
+  const p = store.profile;
+  if (p.name) document.getElementById('dogName').value = p.name;
+  if (p.breed) document.getElementById('dogBreed').value = p.breed;
+  if (p.dob) document.getElementById('dogDob').value = p.dob;
+  if (p.weight) document.getElementById('dogCurrentWeight').value = p.weight;
+  if (p.vet) document.getElementById('vetName').value = p.vet;
+  if (p.notes) document.getElementById('dogNotes').value = p.notes;
+}
+
+function updateDogName() {
+  const n = document.getElementById('dogName').value;
+  document.getElementById('headerDogName').innerHTML = n ? `Tracking <span>${n}</span>` : 'Set up your dog\'s profile →';
+}
+
+function saveProfile() {
+  store.profile = {
+    name: document.getElementById('dogName').value,
+    breed: document.getElementById('dogBreed').value,
+    dob: document.getElementById('dogDob').value,
+    weight: document.getElementById('dogCurrentWeight').value,
+    vet: document.getElementById('vetName').value,
+    notes: document.getElementById('dogNotes').value,
+  };
+  localStorage.setItem('pawProfile', JSON.stringify(store.profile));
+  updateDogName();
+  alert(`✅ ${store.profile.name || 'Profile'} saved!`);
+  showSection('dashboard');
+}
+
+// ====== DRINKING ======
+function setDefaultTimes() {
+  document.querySelectorAll('input[type="datetime-local"]').forEach(i => { if (!i.value) i.value = now(); });
+  document.querySelectorAll('input[type="date"]').forEach(i => { if (!i.value) i.value = new Date().toISOString().slice(0,10); });
+}
+
+function logDrinking() {
+  setDefaultTimes();
+  const amount = parseInt(document.getElementById('drinkAmount').value);
+  if (!amount) { alert('Please enter the amount in ml.'); return; }
+  const entry = {
+    id: Date.now(),
+    amount,
+    time: document.getElementById('drinkTime').value,
+    notes: document.getElementById('drinkNotes').value,
+  };
+  store.drinking.push(entry);
+  save('drinking');
+  document.getElementById('drinkAmount').value = '';
+  document.getElementById('drinkNotes').value = '';
+  renderDrinkLog();
+  updateDashboard();
+}
+
+function renderDrinkLog() {
+  const today = store.drinking.filter(e => isToday(e.time));
+  const total = today.reduce((s,e) => s + e.amount, 0);
+  document.getElementById('drinkTodayTotal').textContent = total + ' ml';
+  renderList('drinkLog', store.drinking, (e, i) => makeEntry('💧', e.amount + ' ml', e.notes, e.time,
+    `function(el){ store.drinking.splice(${i},1); save('drinking'); renderDrinkLog(); updateDashboard(); el.remove(); }`));
+}
+
+// ====== MEALS ======
+function logMeal() {
+  setDefaultTimes();
+  const food = document.getElementById('mealFood').value;
+  if (!food) { alert('Please enter the food description.'); return; }
+  const entry = {
+    id: Date.now(),
+    food,
+    amount: document.getElementById('mealAmount').value,
+    time: document.getElementById('mealTime').value,
+    appetite: document.getElementById('mealAppetite').value,
+    notes: document.getElementById('mealNotes').value,
+  };
+  store.meals.push(entry);
+  save('meals');
+  ['mealFood','mealAmount','mealNotes'].forEach(id => document.getElementById(id).value = '');
+  renderMealLog();
+  updateDashboard();
+}
+
+function renderMealLog() {
+  renderList('mealLog', store.meals, (e, i) => makeEntry('🍗', e.food + (e.amount ? ' — ' + e.amount : ''),
+    [e.appetite, e.notes].filter(Boolean).join(' · '), e.time,
+    `function(el){ store.meals.splice(${i},1); save('meals'); renderMealLog(); updateDashboard(); el.remove(); }`));
+}
+
+// ====== MEDS ======
+function logMed() {
+  setDefaultTimes();
+  const name = document.getElementById('medName').value;
+  if (!name) { alert('Please enter the medication name.'); return; }
+  const entry = {
+    id: Date.now(),
+    name,
+    type: document.getElementById('medType').value,
+    dose: document.getElementById('medDose').value,
+    time: document.getElementById('medTime').value,
+    notes: document.getElementById('medNotes').value,
+  };
+  store.meds.push(entry);
+  save('meds');
+  ['medName','medDose','medNotes'].forEach(id => document.getElementById(id).value = '');
+  renderMedLog();
+  updateDashboard();
+}
+
+function renderMedLog() {
+  renderList('medLog', store.meds, (e, i) => makeEntry(
+    e.type === 'Medication' ? '💊' : e.type === 'Vitamin' ? '🌿' : '⚗️',
+    e.name + (e.dose ? ' — ' + e.dose : ''),
+    [e.type, e.notes].filter(Boolean).join(' · '), e.time,
+    `function(el){ store.meds.splice(${i},1); save('meds'); renderMedLog(); updateDashboard(); el.remove(); }`));
+}
+
+// ====== STOOL ======
+function logStool() {
+  setDefaultTimes();
+  const entry = {
+    id: Date.now(),
+    time: document.getElementById('stoolTime').value,
+    consistency: getSelectedPill('stoolConsistency'),
+    color: getSelectedPill('stoolColor'),
+    concerns: getSelectedPills('stoolConcerns'),
+    notes: document.getElementById('stoolNotes').value,
+  };
+  store.stool.push(entry);
+  save('stool');
+  document.getElementById('stoolNotes').value = '';
+  ['stoolConsistency','stoolColor','stoolConcerns'].forEach(clearPills);
+  renderStoolLog();
+  updateDashboard();
+}
+
+function renderStoolLog() {
+  renderList('stoolLog', store.stool, (e, i) => {
+    const detail = [e.consistency, e.color, e.concerns.join(', '), e.notes].filter(Boolean).join(' · ');
+    return makeEntry('💩', 'Stool', detail, e.time,
+      `function(el){ store.stool.splice(${i},1); save('stool'); renderStoolLog(); updateDashboard(); el.remove(); }`);
+  });
+}
+
+// ====== PEEING ======
+function logPee() {
+  setDefaultTimes();
+  const entry = {
+    id: Date.now(),
+    time: document.getElementById('peeTime').value,
+    location: document.getElementById('peeLocation').value,
+    volume: getSelectedPill('peeVolume'),
+    color: getSelectedPill('peeColor'),
+    concentration: getSelectedPill('peeConcentration'),
+    notes: document.getElementById('peeNotes').value,
+  };
+  store.peeing.push(entry);
+  save('peeing');
+  document.getElementById('peeNotes').value = '';
+  ['peeVolume','peeColor','peeConcentration'].forEach(clearPills);
+  renderPeeLog();
+  updateDashboard();
+}
+
+function renderPeeLog() {
+  renderList('peeLog', store.peeing, (e, i) => {
+    const detail = [e.location, e.volume, e.color, e.concentration, e.notes].filter(Boolean).join(' · ');
+    return makeEntry('🚽', 'Urination', detail, e.time,
+      `function(el){ store.peeing.splice(${i},1); save('peeing'); renderPeeLog(); updateDashboard(); el.remove(); }`);
+  });
+}
+
+// ====== BED WETTING ======
+function logBed() {
+  setDefaultTimes();
+  const entry = {
+    id: Date.now(),
+    time: document.getElementById('bedTime').value,
+    size: getSelectedPill('bedSize'),
+    state: getSelectedPill('bedState'),
+    notes: document.getElementById('bedNotes').value,
+  };
+  store.bedwetting.push(entry);
+  save('bedwetting');
+  document.getElementById('bedNotes').value = '';
+  ['bedSize','bedState'].forEach(clearPills);
+  renderBedLog();
+  updateDashboard();
+}
+
+function renderBedLog() {
+  renderList('bedLog', store.bedwetting, (e, i) => {
+    const detail = [e.size, e.state, e.notes].filter(Boolean).join(' · ');
+    return makeEntry('🛏️', 'Bed Accident', detail, e.time,
+      `function(el){ store.bedwetting.splice(${i},1); save('bedwetting'); renderBedLog(); updateDashboard(); el.remove(); }`);
+  });
+}
+
+// ====== WALKS ======
+function logWalk() {
+  setDefaultTimes();
+  const duration = document.getElementById('walkDuration').value;
+  if (!duration) { alert('Please enter walk duration.'); return; }
+  const entry = {
+    id: Date.now(),
+    time: document.getElementById('walkTime').value,
+    duration: parseInt(duration),
+    distance: document.getElementById('walkDistance').value,
+    energy: getSelectedPill('walkEnergy'),
+    notes: document.getElementById('walkNotes').value,
+  };
+  store.walks.push(entry);
+  save('walks');
+  ['walkDuration','walkDistance','walkNotes'].forEach(id => document.getElementById(id).value = '');
+  clearPills('walkEnergy');
+  renderWalkLog();
+  updateDashboard();
+}
+
+function renderWalkLog() {
+  renderList('walkLog', store.walks, (e, i) => {
+    const title = e.duration + ' min walk' + (e.distance ? ' · ' + e.distance + ' km' : '');
+    const detail = [e.energy, e.notes].filter(Boolean).join(' · ');
+    return makeEntry('🦮', title, detail, e.time,
+      `function(el){ store.walks.splice(${i},1); save('walks'); renderWalkLog(); updateDashboard(); el.remove(); }`);
+  });
+}
+
+// ====== MOOD ======
+function logMood() {
+  setDefaultTimes();
+  const entry = {
+    id: Date.now(),
+    time: document.getElementById('moodTime').value,
+    energy: document.getElementById('energySlider').value,
+    mood: getSelectedPill('moodSelect'),
+    behaviours: getSelectedPills('moodBehaviours'),
+    notes: document.getElementById('moodNotes').value,
+  };
+  store.mood.push(entry);
+  save('mood');
+  document.getElementById('moodNotes').value = '';
+  document.getElementById('energySlider').value = 5;
+  document.getElementById('energyVal').textContent = '5';
+  ['moodSelect','moodBehaviours'].forEach(clearPills);
+  renderMoodLog();
+  updateDashboard();
+}
+
+function renderMoodLog() {
+  renderList('moodLog', store.mood, (e, i) => {
+    const detail = ['Energy: ' + e.energy + '/10', e.mood, e.behaviours.join(', '), e.notes].filter(Boolean).join(' · ');
+    return makeEntry('⚡', 'Check-in', detail, e.time,
+      `function(el){ store.mood.splice(${i},1); save('mood'); renderMoodLog(); updateDashboard(); el.remove(); }`);
+  });
+}
+
+// ====== WEIGHT ======
+function logWeight() {
+  const val = parseFloat(document.getElementById('weightVal').value);
+  if (!val) { alert('Please enter a weight.'); return; }
+  const entry = {
+    id: Date.now(),
+    date: document.getElementById('weightDate').value || new Date().toISOString().slice(0,10),
+    weight: val,
+    notes: document.getElementById('weightNotes').value,
+  };
+  store.weight.push(entry);
+  save('weight');
+  document.getElementById('weightVal').value = '';
+  document.getElementById('weightNotes').value = '';
+  renderWeightLog();
+}
+
+function renderWeightLog() {
+  renderList('weightLog', store.weight, (e, i) => makeEntry('⚖️', e.weight + ' kg', e.notes, e.date + 'T12:00',
+    `function(el){ store.weight.splice(${i},1); save('weight'); renderWeightLog(); el.remove(); }`));
+}
+
+// ====== PATCHES ======
+function logPatch() {
+  const entry = {
+    id: Date.now(),
+    date: document.getElementById('patchDate').value || new Date().toISOString().slice(0,10),
+    location: document.getElementById('patchLocation').value,
+    size: getSelectedPill('patchSize'),
+    change: getSelectedPill('patchChange'),
+    photos: getPhotos('patchPhotos'),
+    notes: document.getElementById('patchNotes').value,
+  };
+  store.patches.push(entry);
+  save('patches');
+  ['patchLocation','patchNotes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('patchPhotos').innerHTML = '';
+  ['patchSize','patchChange'].forEach(clearPills);
+  renderPatchLog();
+}
+
+function renderPatchLog() {
+  renderList('patchLog', store.patches, (e, i) => {
+    const entry = makeEntry('🔬', e.location || 'Bald Patch',
+      [e.size, e.change, e.notes].filter(Boolean).join(' · '), e.date + 'T12:00',
+      `function(el){ store.patches.splice(${i},1); save('patches'); renderPatchLog(); el.remove(); }`);
+    if (e.photos && e.photos.length) {
+      const grid = document.createElement('div');
+      grid.className = 'photo-preview-grid';
+      grid.style.marginTop = '8px';
+      e.photos.forEach(src => {
+        const img = document.createElement('img');
+        img.className = 'photo-thumb';
+        img.src = src;
+        grid.appendChild(img);
+      });
+      entry.querySelector('.log-entry-content').appendChild(grid);
+    }
+    return entry;
+  });
+}
+
+// ====== TEETH ======
+function logTeeth() {
+  const concerns = getSelectedPills('teethConcerns');
+  const entry = {
+    id: Date.now(),
+    date: document.getElementById('teethDate').value || new Date().toISOString().slice(0,10),
+    cleaned: document.getElementById('teethCleaned').value,
+    concerns,
+    photos: getPhotos('teethPhotos'),
+    notes: document.getElementById('teethNotes').value,
+  };
+  store.teeth.push(entry);
+  save('teeth');
+  document.getElementById('teethNotes').value = '';
+  document.getElementById('teethPhotos').innerHTML = '';
+  clearPills('teethConcerns');
+  renderTeethLog();
+}
+
+function renderTeethLog() {
+  renderList('teethLog', store.teeth, (e, i) => {
+    const entry = makeEntry('🦷', e.cleaned || 'Dental Check',
+      [e.concerns.join(', '), e.notes].filter(Boolean).join(' · '), e.date + 'T12:00',
+      `function(el){ store.teeth.splice(${i},1); save('teeth'); renderTeethLog(); el.remove(); }`);
+    if (e.photos && e.photos.length) {
+      const grid = document.createElement('div');
+      grid.className = 'photo-preview-grid';
+      grid.style.marginTop = '8px';
+      e.photos.forEach(src => {
+        const img = document.createElement('img');
+        img.className = 'photo-thumb';
+        img.src = src;
+        grid.appendChild(img);
+      });
+      entry.querySelector('.log-entry-content').appendChild(grid);
+    }
+    return entry;
+  });
+}
+
+// ====== DASHBOARD ======
+function updateDashboard() {
+  const today = new Date();
+  document.getElementById('todayDate').textContent = today.toLocaleDateString('en-GB', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  if (store.profile.name) document.getElementById('dashTitle').textContent = `${store.profile.name}'s Overview`;
+
+  const todayDrink = store.drinking.filter(e => isToday(e.time)).reduce((s,e) => s + e.amount, 0);
+  document.getElementById('statDrinking').textContent = todayDrink;
+  document.getElementById('statMeals').textContent = store.meals.filter(e => isToday(e.time)).length;
+  document.getElementById('statWalks').textContent = store.walks.filter(e => isToday(e.time)).length;
+  document.getElementById('statPees').textContent = store.peeing.filter(e => isToday(e.time)).length;
+  document.getElementById('statStools').textContent = store.stool.filter(e => isToday(e.time)).length;
+  document.getElementById('statMeds').textContent = store.meds.filter(e => isToday(e.time)).length;
+
+  // Recent feed
+  const all = [
+    ...store.drinking.map(e => ({...e, type:'drink', icon:'💧', label: e.amount + ' ml water'})),
+    ...store.meals.map(e => ({...e, type:'meal', icon:'🍗', label: e.food})),
+    ...store.meds.map(e => ({...e, type:'med', icon:'💊', label: e.name + (e.dose ? ' ' + e.dose : '')})),
+    ...store.stool.map(e => ({...e, type:'stool', icon:'💩', label: 'Stool: ' + (e.consistency || '')})),
+    ...store.peeing.map(e => ({...e, type:'pee', icon:'🚽', label: 'Pee: ' + (e.volume || '')})),
+    ...store.bedwetting.map(e => ({...e, type:'bed', icon:'🛏️', label: 'Bed accident: ' + (e.size || '')})),
+    ...store.walks.map(e => ({...e, type:'walk', icon:'🦮', label: e.duration + ' min walk'})),
+    ...store.mood.map(e => ({...e, type:'mood', icon:'⚡', label: 'Energy ' + e.energy + '/10 · ' + (e.mood || '')})),
+    ...store.vomit.map(e => ({...e, type:'vomit', icon:'🤢', label: 'Vomiting: ' + (e.freq || e.contents?.join(', ') || '')})),
+    ...store.sleep.map(e => ({...e, type:'sleep', icon:'💤', label: 'Sleep quality ' + e.quality + '/10' + (e.hours ? ' · ' + e.hours + 'h' : '')})),
+  ].sort((a,b) => new Date(b.time || b.date+'T12:00') - new Date(a.time || a.date+'T12:00')).slice(0,15);
+
+  const feed = document.getElementById('recentFeed');
+  if (!all.length) {
+    feed.innerHTML = '<div class="empty-state">No entries yet today. Start logging! 🐾</div>';
+    return;
+  }
+  feed.innerHTML = '';
+  all.forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    div.innerHTML = `
+      <div class="log-entry-icon">${e.icon}</div>
+      <div class="log-entry-content">
+        <div class="log-entry-title">${e.label}</div>
+      </div>
+      <div class="log-entry-time">${formatTime(e.time || e.date + 'T12:00')}</div>
+    `;
+    feed.appendChild(div);
+  });
+}
+
+// ====== EXPORT / IMPORT ======
+function exportData() {
+  const backup = { version: 1, exported: new Date().toISOString(), ...store };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dogName = store.profile.name ? store.profile.name.replace(/\s/g,'_') : 'PawJournal';
+  a.download = `${dogName}_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.href = url;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ Backup exported!');
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version) throw new Error('Invalid backup file');
+      const keys = ['profile','drinking','meals','meds','stool','peeing','bedwetting','walks','mood','weight','patches','teeth','vomit','vet','sleep','journal','reminders'];
+      keys.forEach(k => {
+        if (data[k] !== undefined) {
+          store[k] = data[k];
+          save(k);
+        }
+      });
+      // Re-render everything
+      renderDrinkLog(); renderMealLog(); renderMedLog(); renderStoolLog();
+      renderPeeLog(); renderBedLog(); renderWalkLog(); renderMoodLog();
+      renderWeightLog(); renderPatchLog(); renderTeethLog();
+      renderVomitLog(); renderVetLog(); renderSleepLog();
+      renderJournalLog(); renderReminderList();
+      updateDashboard();
+      if (store.profile.name) updateDogName();
+      showToast('✅ Data restored from backup!');
+    } catch(err) {
+      showToast('❌ Invalid backup file.');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// ====== TREND TAB SWITCHING ======
+function showTrendTab(tab) {
+  ['correlations','charts','weekcompare','month'].forEach(t => {
+    document.getElementById('trendPanel-' + t).style.display = t === tab ? '' : 'none';
+    const btn = document.getElementById('trendTab-' + t);
+    btn.className = t === tab ? 'btn btn-primary' : 'btn btn-outline';
+    btn.style.fontSize = '0.8rem';
+    btn.style.padding = '8px 16px';
+  });
+  if (tab === 'charts') renderTrendCharts();
+  if (tab === 'weekcompare') renderWeekCompareSetup();
+  if (tab === 'month') { if (!monthOffset) monthOffset = 0; renderMonthView(); }
+}
+
+// ====== TREND CHARTS (14-day bar charts) ======
+function getLast14Days() {
+  const days = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0,10));
+  }
+  return days;
+}
+
+function makeBarsHTML(days, values, color, unit, showZeroAsEmpty) {
+  const max = Math.max(...values, 1);
+  const labels = days.map(d => { const dt = new Date(d+'T12:00'); return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'}); });
+  let html = '<div style="display:flex;align-items:flex-end;gap:3px;height:70px;margin-bottom:4px;">';
+  values.forEach((v,i) => {
+    const h = v > 0 ? Math.round((v/max)*60)+8 : 4;
+    const bg = v > 0 ? color : 'rgba(232,213,188,0.3)';
+    html += `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;">
+      <div title="${labels[i]}: ${v}${unit}" style="width:100%;height:${h}px;background:${bg};border-radius:3px 3px 0 0;cursor:default;transition:opacity 0.2s;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1"></div>
+    </div>`;
+  });
+  html += '</div><div style="display:flex;gap:3px;">';
+  days.forEach((d,i) => {
+    const dt = new Date(d+'T12:00');
+    const isToday = d === new Date().toISOString().slice(0,10);
+    html += `<div style="flex:1;text-align:center;font-size:0.58rem;color:${isToday?'var(--paw)':'var(--text-light)'};font-weight:${isToday?700:400};">${dt.getDate()}</div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderTrendCharts() {
+  const days = getLast14Days();
+
+  // Water
+  const water = days.map(d => store.drinking.filter(e=>e.time&&e.time.startsWith(d)).reduce((s,e)=>s+e.amount,0));
+  document.getElementById('waterTrendChart').innerHTML = makeBarsHTML(days, water, '#7AAFC4', 'ml');
+
+  // Bed accidents
+  const bed = days.map(d => store.bedwetting.filter(e=>e.time&&e.time.startsWith(d)).length);
+  document.getElementById('bedTrendChart').innerHTML = makeBarsHTML(days, bed, '#D4877A', ' accidents');
+
+  // Pees
+  const pees = days.map(d => store.peeing.filter(e=>e.time&&e.time.startsWith(d)).length);
+  document.getElementById('peeTrendChart').innerHTML = makeBarsHTML(days, pees, '#f0c040', ' pees');
+
+  // Energy (average per day)
+  const energy = days.map(d => {
+    const entries = store.mood.filter(e=>e.time&&e.time.startsWith(d));
+    return entries.length ? Math.round(entries.reduce((s,e)=>s+parseInt(e.energy),0)/entries.length*10)/10 : 0;
+  });
+  document.getElementById('energyTrendChart').innerHTML = makeBarsHTML(days, energy, '#C4855A', '/10');
+
+  // Vomit
+  const vomit = days.map(d => store.vomit.filter(e=>e.time&&e.time.startsWith(d)).length);
+  document.getElementById('vomitTrendChart').innerHTML = makeBarsHTML(days, vomit, '#D4877A', ' episodes');
+}
+
+// ====== WEEK COMPARE ======
+function getWeekOptions() {
+  // Generate last 12 weeks
+  const options = [];
+  for (let i = 0; i < 12; i++) {
+    const mon = getMondayOfWeek(-i);
+    const sun = new Date(mon); sun.setDate(sun.getDate()+6);
+    const label = mon.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' – ' + sun.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    const startStr = mon.toISOString().slice(0,10);
+    options.push({ label, startStr });
+  }
+  return options;
+}
+
+function renderWeekCompareSetup() {
+  const opts = getWeekOptions();
+  ['weekCompareA','weekCompareB'].forEach((id, idx) => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = opts.map((o,i) => `<option value="${o.startStr}" ${i===idx?'selected':''}>${o.label}</option>`).join('');
+  });
+  renderWeekCompare();
+}
+
+function getWeekDaysFromMonday(mondayStr) {
+  const days = [];
+  for (let i=0; i<7; i++) {
+    const d = new Date(mondayStr+'T12:00');
+    d.setDate(d.getDate()+i);
+    days.push(d.toISOString().slice(0,10));
+  }
+  return days;
+}
+
+function getWeekStats(days) {
+  return {
+    water: days.reduce((s,d) => s + store.drinking.filter(e=>e.time&&e.time.startsWith(d)).reduce((a,e)=>a+e.amount,0), 0),
+    meals: days.reduce((s,d) => s + store.meals.filter(e=>e.time&&e.time.startsWith(d)).length, 0),
+    pees:  days.reduce((s,d) => s + store.peeing.filter(e=>e.time&&e.time.startsWith(d)).length, 0),
+    stools:days.reduce((s,d) => s + store.stool.filter(e=>e.time&&e.time.startsWith(d)).length, 0),
+    bed:   days.reduce((s,d) => s + store.bedwetting.filter(e=>e.time&&e.time.startsWith(d)).length, 0),
+    walks: days.reduce((s,d) => s + store.walks.filter(e=>e.time&&e.time.startsWith(d)).length, 0),
+    meds:  days.reduce((s,d) => s + store.meds.filter(e=>e.time&&e.time.startsWith(d)).length, 0),
+    vomit: days.reduce((s,d) => s + store.vomit.filter(e=>e.time&&e.time.startsWith(d)).length, 0),
+    energy: (() => {
+      const entries = days.flatMap(d => store.mood.filter(e=>e.time&&e.time.startsWith(d)));
+      return entries.length ? Math.round(entries.reduce((s,e)=>s+parseInt(e.energy),0)/entries.length*10)/10 : null;
+    })(),
+  };
+}
+
+function renderWeekCompare() {
+  const aStart = document.getElementById('weekCompareA').value;
+  const bStart = document.getElementById('weekCompareB').value;
+  if (!aStart || !bStart) return;
+  const daysA = getWeekDaysFromMonday(aStart);
+  const daysB = getWeekDaysFromMonday(bStart);
+  const statsA = getWeekStats(daysA);
+  const statsB = getWeekStats(daysB);
+
+  const labelA = document.getElementById('weekCompareA').options[document.getElementById('weekCompareA').selectedIndex].text;
+  const labelB = document.getElementById('weekCompareB').options[document.getElementById('weekCompareB').selectedIndex].text;
+
+  const rows = [
+    { key:'water',  label:'💧 Total water', unit:'ml', higherBad:false },
+    { key:'meals',  label:'🍗 Meals', unit:'', higherBad:false },
+    { key:'pees',   label:'🚽 Pees', unit:'', higherBad:false },
+    { key:'stools', label:'💩 Stools', unit:'', higherBad:false },
+    { key:'bed',    label:'🛏️ Bed accidents', unit:'', higherBad:true },
+    { key:'walks',  label:'🦮 Walks', unit:'', higherBad:false },
+    { key:'meds',   label:'💊 Doses given', unit:'', higherBad:false },
+    { key:'vomit',  label:'🤢 Vomit episodes', unit:'', higherBad:true },
+    { key:'energy', label:'⚡ Avg energy', unit:'/10', higherBad:false },
+  ];
+
+  let html = `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:1px solid var(--sand);border-radius:12px;overflow:hidden;">`;
+  // Header
+  html += `<div style="background:var(--warm);padding:10px 14px;font-size:0.78rem;font-weight:700;color:var(--text-mid);"></div>
+    <div style="background:var(--warm);padding:10px 14px;font-size:0.78rem;font-weight:700;color:var(--paw);text-align:center;">${labelA}</div>
+    <div style="background:var(--warm);padding:10px 14px;font-size:0.78rem;font-weight:700;color:var(--sky);text-align:center;">${labelB}</div>`;
+
+  rows.forEach((row, ri) => {
+    const a = statsA[row.key];
+    const b = statsB[row.key];
+    const bg = ri % 2 === 0 ? 'rgba(255,255,255,0.5)' : 'rgba(245,237,224,0.4)';
+
+    const diff = (a !== null && b !== null && a !== undefined && b !== undefined) ? a - b : null;
+    const aStr = a !== null && a !== undefined ? a + row.unit : '—';
+    const bStr = b !== null && b !== undefined ? b + row.unit : '—';
+
+    let aStyle = 'color:var(--text);';
+    let bStyle = 'color:var(--text);';
+    if (diff !== null && diff !== 0) {
+      const aWins = row.higherBad ? diff < 0 : diff > 0;
+      aStyle = aWins ? 'color:var(--sage);font-weight:700;' : 'color:var(--blush);';
+      bStyle = !aWins ? 'color:var(--sage);font-weight:700;' : 'color:var(--blush);';
+    }
+
+    html += `<div style="background:${bg};padding:10px 14px;font-size:0.82rem;color:var(--text-mid);">${row.label}</div>
+      <div style="background:${bg};padding:10px 14px;font-size:0.88rem;text-align:center;${aStyle}">${aStr}</div>
+      <div style="background:${bg};padding:10px 14px;font-size:0.88rem;text-align:center;${bStyle}">${bStr}</div>`;
+  });
+
+  html += '</div>';
+
+  // Auto-insights from comparison
+  const insights = [];
+  if (statsA.water && statsB.water) {
+    const diff = statsA.water - statsB.water;
+    if (Math.abs(diff) > 200) insights.push(`💧 Water intake was ${Math.abs(diff)}ml ${diff > 0 ? 'higher' : 'lower'} in Week A.`);
+  }
+  if (statsA.bed !== undefined && statsB.bed !== undefined && statsA.bed !== statsB.bed) {
+    insights.push(`🛏️ Bed accidents: ${statsA.bed} in Week A vs ${statsB.bed} in Week B.${statsA.bed > statsB.bed && statsA.water > statsB.water ? ' Note: Week A also had higher water intake — possible link.' : ''}`);
+  }
+  if (statsA.vomit !== undefined && statsB.vomit !== undefined && (statsA.vomit > 0 || statsB.vomit > 0)) {
+    insights.push(`🤢 Vomiting: ${statsA.vomit} episode(s) in Week A vs ${statsB.vomit} in Week B.`);
+  }
+
+  if (insights.length) {
+    html += '<div style="margin-top:16px;">';
+    insights.forEach(ins => {
+      html += `<div class="trend-insight" style="margin-bottom:8px;"><div class="insight-icon">💡</div><div class="insight-text"><p>${ins}</p></div></div>`;
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('weekCompareOutput').innerHTML = html;
+}
+
+// ====== MONTH VIEW ======
+let monthOffset = 0;
+
+function shiftMonth(dir) {
+  monthOffset += dir;
+  renderMonthView();
+}
+
+function renderMonthView() {
+  const now = new Date();
+  const target = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+  const year = target.getFullYear();
+  const month = target.getMonth();
+  const monthName = target.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+  document.getElementById('monthLabel').textContent = monthName;
+  document.getElementById('monthNextBtn').style.display = monthOffset >= 0 ? 'none' : '';
+
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
+  const startOffset = firstDow === 0 ? 6 : firstDow - 1; // Mon-based
+
+  const todayStr = new Date().toISOString().slice(0,10);
+
+  const categories = [
+    { store:'drinking', getTs:e=>e.time, color:'#7AAFC4', icon:'💧', getSummary:(es)=>es.reduce((s,e)=>s+e.amount,0)+'ml' },
+    { store:'peeing',   getTs:e=>e.time, color:'#f0c040', icon:'🚽', getSummary:(es)=>es.length+'×' },
+    { store:'bedwetting',getTs:e=>e.time,color:'#D4877A', icon:'🛏️', getSummary:(es)=>es.length+'×' },
+    { store:'vomit',    getTs:e=>e.time, color:'#D4877A', icon:'🤢', getSummary:(es)=>es.length+'×' },
+    { store:'walks',    getTs:e=>e.time, color:'#7A9E7E', icon:'🦮', getSummary:(es)=>es.length+'×' },
+    { store:'meds',     getTs:e=>e.time, color:'#a080c0', icon:'💊', getSummary:(es)=>es.length+'×' },
+  ];
+
+  let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">';
+  // Day headers
+  ['M','T','W','T','F','S','S'].forEach(d => {
+    html += `<div style="text-align:center;font-size:0.7rem;font-weight:700;color:var(--text-mid);padding:6px 2px;">${d}</div>`;
+  });
+
+  // Empty cells before month start
+  for (let i=0; i<startOffset; i++) html += '<div></div>';
+
+  for (let day=1; day<=daysInMonth; day++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+
+    let dots = '';
+    categories.forEach(cat => {
+      const entries = store[cat.store].filter(e => {
+        const ts = cat.getTs(e); return ts && ts.startsWith(dateStr);
+      });
+      if (entries.length) {
+        dots += `<div style="font-size:0.6rem;background:${cat.color}22;color:${cat.color};border-radius:3px;padding:1px 3px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${cat.icon} ${cat.getSummary(entries)}">${cat.icon}${cat.getSummary(entries)}</div>`;
+      }
+    });
+
+    html += `<div style="min-height:60px;border:1px solid ${isToday?'var(--paw)':'var(--sand)'};border-radius:6px;padding:4px;background:${isToday?'rgba(196,133,90,0.08)':'rgba(255,255,255,0.4)'};">
+      <div style="font-size:0.72rem;font-weight:${isToday?700:500};color:${isToday?'var(--paw)':'var(--text-mid)'};">${day}</div>
+      ${dots}
+    </div>`;
+  }
+  html += '</div>';
+
+  document.getElementById('monthCalendar').innerHTML = html;
+
+  // Month totals
+  const allDays = [];
+  for (let d=1; d<=daysInMonth; d++) {
+    allDays.push(`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+  }
+  const totalWater = store.drinking.filter(e=>allDays.some(d=>e.time&&e.time.startsWith(d))).reduce((s,e)=>s+e.amount,0);
+  const totalPees = store.peeing.filter(e=>allDays.some(d=>e.time&&e.time.startsWith(d))).length;
+  const totalBed = store.bedwetting.filter(e=>allDays.some(d=>e.time&&e.time.startsWith(d))).length;
+  const totalWalks = store.walks.filter(e=>allDays.some(d=>e.time&&e.time.startsWith(d))).length;
+  const totalVomit = store.vomit.filter(e=>allDays.some(d=>e.time&&e.time.startsWith(d))).length;
+  const totalMeds = store.meds.filter(e=>allDays.some(d=>e.time&&e.time.startsWith(d))).length;
+
+  document.getElementById('monthTotals').innerHTML = `
+    <h4 style="font-family:'Playfair Display',serif;color:var(--dark-bark);margin-bottom:12px;">Month Totals</h4>
+    <div class="grid-3" style="gap:10px;">
+      <div class="stat-box" style="padding:12px;"><div class="stat-value" style="font-size:1.2rem;">${totalWater}ml</div><div class="stat-label">💧 Water</div></div>
+      <div class="stat-box" style="padding:12px;"><div class="stat-value" style="font-size:1.2rem;">${totalPees}</div><div class="stat-label">🚽 Pees</div></div>
+      <div class="stat-box" style="padding:12px;"><div class="stat-value" style="font-size:1.2rem;${totalBed>0?'color:var(--blush)':''}">${totalBed}</div><div class="stat-label">🛏️ Accidents</div></div>
+      <div class="stat-box" style="padding:12px;"><div class="stat-value" style="font-size:1.2rem;">${totalWalks}</div><div class="stat-label">🦮 Walks</div></div>
+      <div class="stat-box" style="padding:12px;"><div class="stat-value" style="font-size:1.2rem;${totalVomit>0?'color:var(--blush)':''}">${totalVomit}</div><div class="stat-label">🤢 Vomiting</div></div>
+      <div class="stat-box" style="padding:12px;"><div class="stat-value" style="font-size:1.2rem;">${totalMeds}</div><div class="stat-label">💊 Doses</div></div>
+    </div>`;
+}
+
+// ====== TRENDS (correlations + 7-day summary) ======
+function getLast7Days() {
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0,10));
+  }
+  return days;
+}
+
+function updateTrends() {
+  const days = getLast7Days();
+  const dayLabels = days.map(d => new Date(d+'T12:00').toLocaleDateString('en-GB',{weekday:'short'}));
+  const waterByDay = days.map(day => store.drinking.filter(e=>e.time&&e.time.startsWith(day)).reduce((s,e)=>s+e.amount,0));
+
+  // Correlations
+  const container = document.getElementById('insightsContainer');
+  const insights = [];
+  const avgWater = waterByDay.reduce((a,b)=>a+b,0) / 7 || 0;
+
+  // High water → bed accidents
+  const highWaterDays = days.filter((d,i) => waterByDay[i] > Math.max(avgWater * 1.2, 400));
+  const bedDays = days.filter(day => store.bedwetting.some(e=>e.time&&e.time.startsWith(day)));
+  const overlap = highWaterDays.filter(d=>bedDays.includes(d)).length;
+  if (highWaterDays.length > 0 && overlap > 0) {
+    insights.push({ icon:'💧🛏️', title:'Water intake & bed accidents appear linked', desc:`On ${overlap} of ${highWaterDays.length} above-average water days this week, a bed accident also occurred. Consider limiting water intake in the 2 hours before bed.` });
+  }
+
+  // Vomiting after water
+  const vomitAfterWater = store.vomit.filter(e => {
+    if (!e.timing) return false;
+    return e.timing.toLowerCase().includes('water');
+  });
+  if (vomitAfterWater.length >= 2) {
+    insights.push({ icon:'💧🤢', title:`Vomiting after drinking water logged ${vomitAfterWater.length} times`, desc:`Your dog has vomited shortly after drinking water on ${vomitAfterWater.length} occasions. Consider offering smaller amounts more frequently rather than free access to a full bowl.` });
+  }
+
+  // Walk frequency vs energy
+  const walkDays = days.filter(day => store.walks.some(e=>e.time&&e.time.startsWith(day)));
+  const highEnergyEntries = store.mood.filter(e=>parseInt(e.energy)>=7 && days.some(d=>e.time&&e.time.startsWith(d)));
+  if (walkDays.length > 0) {
+    insights.push({ icon:'🦮⚡', title:`${walkDays.length}/7 days had walks`, desc:`${highEnergyEntries.length > 0 ? 'High energy was logged ' + highEnergyEntries.length + ' time(s) — compare to walk days to see if exercise correlates with better mood.' : 'Log energy after walks to spot whether exercise is improving your dog\'s mood.'}` });
+  }
+
+  // Poor stools
+  const recentStools = store.stool.filter(e=>days.some(d=>e.time&&e.time.startsWith(d)));
+  const poorStools = recentStools.filter(e=>e.consistency&&(e.consistency.includes('Watery')||e.consistency.includes('Mushy')));
+  if (poorStools.length > 0) {
+    insights.push({ icon:'💩⚠️', title:`${poorStools.length} loose stool${poorStools.length>1?'s':''} this week`, desc:'Worth noting for your next vet visit, especially if it continues. Check for diet changes around these dates.' });
+  }
+
+  // Medication gaps
+  const medDays = days.filter(day => store.meds.some(e=>e.time&&e.time.startsWith(day)));
+  if (store.meds.length > 0) {
+    insights.push({ icon:'💊'+(medDays.length>=5?'✅':'⚠️'), title:`Medications given on ${medDays.length}/7 days`, desc: medDays.length < 5 ? 'Some days appear to be missing medication. Check your reminders.' : 'Good medication consistency this week!' });
+  }
+
+  // Low energy trend
+  const lowEnergyDays = store.mood.filter(e=>parseInt(e.energy)<=3 && days.some(d=>e.time&&e.time.startsWith(d)));
+  if (lowEnergyDays.length >= 2) {
+    insights.push({ icon:'😴⚠️', title:`Low energy logged ${lowEnergyDays.length} times this week`, desc:'Your dog has had multiple low-energy check-ins. Worth mentioning to your vet if this continues.' });
+  }
+
+  if (!insights.length) {
+    container.innerHTML = '<div class="empty-state">Log more data to see correlations and insights appear here! 🔍</div>';
+  } else {
+    container.innerHTML = insights.map(ins => `
+      <div class="trend-insight">
+        <div class="insight-icon">${ins.icon}</div>
+        <div class="insight-text"><h4>${ins.title}</h4><p>${ins.desc}</p></div>
+      </div>`).join('');
+  }
+
+  // 7-day summary
+  const peeCount = store.peeing.filter(e=>days.some(d=>e.time&&e.time.startsWith(d))).length;
+  const bedCount = store.bedwetting.filter(e=>days.some(d=>e.time&&e.time.startsWith(d))).length;
+  const vomitCount = store.vomit.filter(e=>days.some(d=>e.time&&e.time.startsWith(d))).length;
+  const totalWaterWeek = waterByDay.reduce((a,b)=>a+b,0);
+
+  document.getElementById('weekSummary').innerHTML = `
+    <div class="grid-3" style="gap:12px;">
+      <div class="stat-box" style="padding:16px;"><div class="stat-value" style="font-size:1.4rem;">${Math.round(totalWaterWeek/7)}</div><div class="stat-label">Avg ml water/day</div></div>
+      <div class="stat-box" style="padding:16px;"><div class="stat-value" style="font-size:1.4rem;">${peeCount}</div><div class="stat-label">Total pees (7 days)</div></div>
+      <div class="stat-box" style="padding:16px;"><div class="stat-value" style="font-size:1.4rem;${bedCount>0?'color:var(--blush)':''}">${bedCount}</div><div class="stat-label">Bed accidents (7 days)</div></div>
+      <div class="stat-box" style="padding:16px;"><div class="stat-value" style="font-size:1.4rem;${vomitCount>0?'color:var(--blush)':''}">${vomitCount}</div><div class="stat-label">Vomit episodes (7 days)</div></div>
+      <div class="stat-box" style="padding:16px;"><div class="stat-value" style="font-size:1.4rem;">${walkDays ? walkDays.length : 0}</div><div class="stat-label">Walk days (7 days)</div></div>
+      <div class="stat-box" style="padding:16px;"><div class="stat-value" style="font-size:1.4rem;">${medDays ? medDays.length : 0}/7</div><div class="stat-label">Medication days</div></div>
+    </div>`;
+}
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0,10));
+  }
+  return days;
+}
+
+function updateTrends() {
+  const days = getLast7Days();
+  const dayLabels = days.map(d => {
+    const dt = new Date(d + 'T12:00');
+    return dt.toLocaleDateString('en-GB',{weekday:'short'});
+  });
+
+  // Water chart
+  const waterByDay = days.map(day => store.drinking.filter(e => e.time && e.time.startsWith(day)).reduce((s,e) => s + e.amount, 0));
+  const maxWater = Math.max(...waterByDay, 1);
+
+  let waterHtml = '<div class="mini-chart">';
+  waterByDay.forEach(v => {
+    const h = Math.round((v / maxWater) * 55) + 5;
+    waterHtml += `<div style="display:flex;flex-direction:column;align-items:center;flex:1;">
+      <div class="mini-bar" style="height:${h}px;width:100%;background:${v > 800 ? '#7AAFC4' : 'var(--paw-light)'};border-radius:4px 4px 0 0;"></div>
+    </div>`;
+  });
+  waterHtml += '</div><div style="display:flex;gap:4px;">' + dayLabels.map((l,i) => `<div class="mini-bar-label" style="flex:1;text-align:center;">${l}<br><small style="font-size:0.6rem;color:var(--text-light)">${waterByDay[i]}ml</small></div>`).join('') + '</div>';
+  document.getElementById('waterTrendChart').innerHTML = waterHtml;
+
+  // Insights
+  const container = document.getElementById('insightsContainer');
+  const insights = [];
+
+  // Insight 1: High water → more bed accidents
+  const highWaterDays = days.filter((d,i) => waterByDay[i] > 600);
+  const bedDays = days.filter(day => store.bedwetting.some(e => e.time && e.time.startsWith(day)));
+  const overlap = highWaterDays.filter(d => bedDays.includes(d)).length;
+  if (highWaterDays.length > 0 && overlap > 0) {
+    insights.push({
+      icon: '💧🛏️',
+      title: 'Water intake & bed accidents may be linked',
+      desc: `On ${overlap} out of ${highWaterDays.length} high-water days (600ml+), there was also a bed accident. Consider monitoring intake before bedtime.`
+    });
+  }
+
+  // Insight 2: Walk frequency vs energy
+  const walkDays = days.filter(day => store.walks.some(e => e.time && e.time.startsWith(day)));
+  const highEnergyEntries = store.mood.filter(e => e.energy >= 7 && days.some(d => e.time && e.time.startsWith(d)));
+  if (walkDays.length > 0) {
+    insights.push({
+      icon: '🦮⚡',
+      title: `${walkDays.length} walk days in the last week`,
+      desc: `Your dog went for walks on ${walkDays.length} of the last 7 days. ${highEnergyEntries.length > 0 ? 'High energy was recorded ' + highEnergyEntries.length + ' times.' : 'Try logging energy after walks to spot patterns.'}`
+    });
+  }
+
+  // Insight 3: Stool health
+  const recentStools = store.stool.filter(e => days.some(d => e.time && e.time.startsWith(d)));
+  const poorStools = recentStools.filter(e => e.consistency && (e.consistency.includes('Watery') || e.consistency.includes('Mushy')));
+  if (poorStools.length > 0) {
+    insights.push({
+      icon: '💩⚠️',
+      title: `${poorStools.length} loose stool${poorStools.length > 1 ? 's' : ''} this week`,
+      desc: 'You may want to discuss this pattern with your vet, especially if it continues. Note any dietary changes around these dates.'
+    });
+  }
+
+  // Insight 4: Medication consistency
+  const medDays = days.filter(day => store.meds.some(e => e.time && e.time.startsWith(day)));
+  if (store.meds.length > 0) {
+    insights.push({
+      icon: '💊✅',
+      title: `Medications given on ${medDays.length}/7 days this week`,
+      desc: medDays.length < 5 ? 'There may be some gaps in medication. Check with your vet about consistency.' : 'Great consistency with medications this week!'
+    });
+  }
+
+  if (!insights.length) {
+    container.innerHTML = '<div class="empty-state">Log more data to see correlations and insights appear here! 🔍</div>';
+  } else {
+    container.innerHTML = insights.map(ins => `
+      <div class="trend-insight">
+        <div class="insight-icon">${ins.icon}</div>
+        <div class="insight-text">
+          <h4>${ins.title}</h4>
+          <p>${ins.desc}</p>
+        </div>
+      </div>`).join('');
+  }
+
+  // Week summary
+  const peeCount = store.peeing.filter(e => days.some(d => e.time && e.time.startsWith(d))).length;
+  const bedCount = store.bedwetting.filter(e => days.some(d => e.time && e.time.startsWith(d))).length;
+  const totalWater = waterByDay.reduce((a,b) => a+b, 0);
+  const avgWater = Math.round(totalWater / 7);
+
+  document.getElementById('weekSummary').innerHTML = `
+    <div class="grid-3" style="gap:12px;">
+      <div class="stat-box" style="padding:16px;">
+        <div class="stat-value" style="font-size:1.4rem;">${avgWater}</div>
+        <div class="stat-label">Avg ml water/day</div>
+      </div>
+      <div class="stat-box" style="padding:16px;">
+        <div class="stat-value" style="font-size:1.4rem;">${peeCount}</div>
+        <div class="stat-label">Total pees (7 days)</div>
+      </div>
+      <div class="stat-box" style="padding:16px;">
+        <div class="stat-value" style="font-size:1.4rem;${bedCount > 0 ? 'color:var(--blush)' : ''}">${bedCount}</div>
+        <div class="stat-label">Bed accidents (7 days)</div>
+      </div>
+    </div>
+  `;
+}
+
+// ====== INIT ======
+function init() {
+  setDefaultTimes();
+
+  // Set today date on all date inputs
+  const today = new Date().toISOString().slice(0,10);
+  document.querySelectorAll('input[type="date"]').forEach(i => { if (!i.value) i.value = today; });
+
+  // Load profile
+  if (store.profile.name) {
+    updateDogName();
+  }
+
+  // Render all logs
+  renderDrinkLog();
+  renderMealLog();
+  renderMedLog();
+  renderStoolLog();
+  renderPeeLog();
+  renderBedLog();
+  renderWalkLog();
+  renderMoodLog();
+  renderWeightLog();
+  renderPatchLog();
+  renderTeethLog();
+  renderVomitLog();
+  renderVetLog();
+  renderSleepLog();
+  renderJournalLog();
+  renderReminderList();
+  updateDashboard();
+  scheduleReminders();
+
+  // If no profile set, show setup first
+  if (!store.profile.name) {
+    showSection('setup');
+  }
+}
+
+// ====== VOMITING ======
+function logVomit() {
+  setDefaultTimes();
+  const entry = {
+    id: Date.now(),
+    time: document.getElementById('vomitTime').value,
+    timing: document.getElementById('vomitTiming').value,
+    contents: getSelectedPills('vomitContents'),
+    freq: getSelectedPill('vomitFreq'),
+    notes: document.getElementById('vomitNotes').value,
+  };
+  store.vomit.push(entry);
+  save('vomit');
+  document.getElementById('vomitNotes').value = '';
+  document.getElementById('vomitTiming').value = '';
+  ['vomitContents','vomitFreq'].forEach(clearPills);
+  renderVomitLog();
+  updateDashboard();
+}
+
+function renderVomitLog() {
+  renderList('vomitLog', store.vomit, (e, i) => {
+    const detail = [e.timing, e.contents.join(', '), e.freq, e.notes].filter(Boolean).join(' · ');
+    return makeEntry('🤢', 'Vomiting episode', detail, e.time,
+      `function(el){ store.vomit.splice(${i},1); save('vomit'); renderVomitLog(); updateDashboard(); el.remove(); }`);
+  });
+}
+
+// ====== VET VISITS ======
+function logVet() {
+  const entry = {
+    id: Date.now(),
+    date: document.getElementById('vetDate').value || new Date().toISOString().slice(0,10),
+    clinic: document.getElementById('vetClinic').value,
+    reason: document.getElementById('vetReason').value,
+    diagnosis: document.getElementById('vetDiagnosis').value,
+    tests: document.getElementById('vetTests').value,
+    meds: document.getElementById('vetMeds').value,
+    weight: document.getElementById('vetWeight').value,
+    nextAppt: document.getElementById('vetNextAppt').value,
+    notes: document.getElementById('vetNotes').value,
+  };
+  if (!entry.reason && !entry.clinic) { alert('Please fill in at least the clinic or reason.'); return; }
+  store.vet.push(entry);
+  save('vet');
+  ['vetClinic','vetReason','vetDiagnosis','vetTests','vetMeds','vetWeight','vetNotes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('vetNextAppt').value = '';
+  renderVetLog();
+}
+
+function renderVetLog() {
+  const cont = document.getElementById('vetLog');
+  cont.innerHTML = '';
+  if (!store.vet.length) { cont.innerHTML = '<div class="empty-state">No vet visits logged yet.</div>'; return; }
+  [...store.vet].reverse().forEach((e, ri) => {
+    const i = store.vet.length - 1 - ri;
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    div.style.flexDirection = 'column';
+    div.style.alignItems = 'stretch';
+    div.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <div class="log-entry-icon">🩺</div>
+        <div style="flex:1;">
+          <div class="log-entry-title">${e.clinic || 'Vet Visit'} ${e.reason ? '— ' + e.reason : ''}</div>
+          <div class="log-entry-detail">${e.date}${e.nextAppt ? ' · Follow-up: ' + e.nextAppt : ''}</div>
+        </div>
+        <button class="log-entry-delete" onclick="store.vet.splice(${i},1);save('vet');renderVetLog();">✕</button>
+      </div>
+      ${e.diagnosis ? `<div style="font-size:0.82rem;margin-bottom:4px;"><strong>Diagnosis:</strong> ${e.diagnosis}</div>` : ''}
+      ${e.tests ? `<div style="font-size:0.82rem;margin-bottom:4px;"><strong>Tests:</strong> ${e.tests}</div>` : ''}
+      ${e.meds ? `<div style="font-size:0.82rem;margin-bottom:4px;"><strong>Treatment:</strong> ${e.meds}</div>` : ''}
+      ${e.weight ? `<div style="font-size:0.82rem;margin-bottom:4px;"><strong>Weight:</strong> ${e.weight} kg</div>` : ''}
+      ${e.notes ? `<div style="font-size:0.82rem;color:var(--text-light);">${e.notes}</div>` : ''}
+    `;
+    cont.appendChild(div);
+  });
+}
+
+// ====== SLEEP ======
+function logSleep() {
+  const entry = {
+    id: Date.now(),
+    date: document.getElementById('sleepDate').value || new Date().toISOString().slice(0,10),
+    hours: document.getElementById('sleepHours').value,
+    quality: document.getElementById('sleepQualSlider').value,
+    disturbances: getSelectedPills('sleepDisturbances'),
+    notes: document.getElementById('sleepNotes').value,
+  };
+  store.sleep.push(entry);
+  save('sleep');
+  document.getElementById('sleepHours').value = '';
+  document.getElementById('sleepNotes').value = '';
+  document.getElementById('sleepQualSlider').value = 5;
+  document.getElementById('sleepQualVal').textContent = '5';
+  clearPills('sleepDisturbances');
+  renderSleepLog();
+  updateDashboard();
+}
+
+function renderSleepLog() {
+  renderList('sleepLog', store.sleep, (e, i) => {
+    const title = (e.hours ? e.hours + ' hrs · ' : '') + 'Quality ' + e.quality + '/10';
+    const detail = [e.disturbances.join(', '), e.notes].filter(Boolean).join(' · ');
+    return makeEntry('💤', title, detail, e.date + 'T08:00',
+      `function(el){ store.sleep.splice(${i},1); save('sleep'); renderSleepLog(); el.remove(); }`);
+  });
+}
+
+// ====== JOURNAL ======
+function logJournal() {
+  const text = document.getElementById('journalText').value.trim();
+  if (!text) { alert('Please write something in the journal.'); return; }
+  const entry = {
+    id: Date.now(),
+    date: document.getElementById('journalDate').value || new Date().toISOString().slice(0,10),
+    tag: document.getElementById('journalTag').value,
+    text,
+  };
+  store.journal.push(entry);
+  save('journal');
+  document.getElementById('journalText').value = '';
+  document.getElementById('journalTag').value = '';
+  renderJournalLog();
+}
+
+function renderJournalLog() {
+  const cont = document.getElementById('journalLog');
+  if (!store.journal.length) { cont.innerHTML = '<div class="empty-state">No journal entries yet.</div>'; return; }
+  cont.innerHTML = '';
+  [...store.journal].reverse().forEach((e, ri) => {
+    const i = store.journal.length - 1 - ri;
+    const div = document.createElement('div');
+    div.className = 'journal-entry';
+    div.innerHTML = `
+      <button class="journal-entry-delete" onclick="store.journal.splice(${i},1);save('journal');renderJournalLog();">✕</button>
+      <div class="journal-entry-date">${e.date}${e.tag ? ' · ' + e.tag : ''}</div>
+      <div class="journal-entry-text">${e.text}</div>
+    `;
+    cont.appendChild(div);
+  });
+}
+
+// ====== REMINDERS ======
+function addReminder() {
+  const name = document.getElementById('remName').value.trim();
+  if (!name) { alert('Please enter a medication name.'); return; }
+  const rem = {
+    id: Date.now(),
+    name,
+    dose: document.getElementById('remDose').value,
+    freq: document.getElementById('remFreq').value,
+    time: document.getElementById('remTime').value,
+    notes: document.getElementById('remNotes').value,
+    enabled: true,
+  };
+  store.reminders.push(rem);
+  save('reminders');
+  ['remName','remDose','remNotes'].forEach(id => document.getElementById(id).value = '');
+  renderReminderList();
+  scheduleReminders();
+  showToast('🔔 Reminder added for ' + name);
+}
+
+function renderReminderList() {
+  const cont = document.getElementById('reminderList');
+  if (!store.reminders.length) { cont.innerHTML = '<div class="empty-state">No reminders set up yet.</div>'; return; }
+  cont.innerHTML = '';
+  store.reminders.forEach((r, i) => {
+    const freqLabel = { daily: 'Once daily', twice: 'Twice daily', weekly: 'Weekly', custom: 'Custom' }[r.freq] || r.freq;
+    const div = document.createElement('div');
+    div.className = 'reminder-item';
+    div.innerHTML = `
+      <div class="rem-icon">🔔</div>
+      <div class="rem-info">
+        <div class="rem-name">${r.name}${r.dose ? ' — ' + r.dose : ''}</div>
+        <div class="rem-detail">${freqLabel} · ${r.time}${r.notes ? ' · ' + r.notes : ''}</div>
+      </div>
+      <button class="rem-delete" onclick="store.reminders.splice(${i},1);save('reminders');renderReminderList();scheduleReminders();">✕</button>
+    `;
+    cont.appendChild(div);
+  });
+}
+
+function requestNotifPermission() {
+  if (!('Notification' in window)) { showToast('⚠️ Browser notifications not supported.'); return; }
+  Notification.requestPermission().then(p => {
+    if (p === 'granted') {
+      showToast('✅ Notifications enabled!');
+      document.getElementById('notifBtn').textContent = '✅ Notifications Enabled';
+      scheduleReminders();
+    } else {
+      showToast('❌ Notification permission denied.');
+    }
+  });
+}
+
+function scheduleReminders() {
+  // Check every minute if any reminder is due
+  if (window._reminderInterval) clearInterval(window._reminderInterval);
+  window._reminderInterval = setInterval(() => {
+    if (Notification.permission !== 'granted') return;
+    const now = new Date();
+    const hhmm = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+    store.reminders.forEach(r => {
+      if (r.time === hhmm) {
+        const key = 'notif_' + r.id + '_' + now.toDateString() + '_' + hhmm;
+        if (!sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, '1');
+          new Notification('🐾 Paw Journal', {
+            body: `Time to give ${r.name}${r.dose ? ' (' + r.dose + ')' : ''}`,
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🐾</text></svg>'
+          });
+        }
+      }
+    });
+  }, 30000);
+}
+
+// ====== TOAST ======
+function showToast(msg) {
+  const cont = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  cont.appendChild(t);
+  setTimeout(() => t.remove(), 4200);
+}
+
+// ====== WEEK OVERVIEW ======
+let weekOffset = 0;
+
+function getMondayOfWeek(offset) {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff + offset * 7);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function getWeekDays(offset) {
+  const mon = getMondayOfWeek(offset);
+  return Array.from({length:7}, (_,i) => {
+    const d = new Date(mon);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+}
+
+function shiftWeek(dir) {
+  weekOffset += dir;
+  renderWeekGrid();
+}
+
+function goToCurrentWeek() {
+  weekOffset = 0;
+  renderWeekGrid();
+}
+
+function renderWeekGrid() {
+  const days = getWeekDays(weekOffset);
+  const todayStr = new Date().toISOString().slice(0,10);
+  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  const start = days[0].toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  const end = days[6].toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('weekRangeLabel').textContent = `${start} — ${end}`;
+  document.getElementById('weekNextBtn').style.display = weekOffset >= 0 ? 'none' : '';
+
+  const categories = [
+    { key:'drink',  label:'💧 Water',  store:'drinking', getTs: e=>e.time, getSummary: (es) => es.reduce((s,e)=>s+e.amount,0)+'ml', dotClass:'week-dot-drink' },
+    { key:'meal',   label:'🍗 Meals',  store:'meals',    getTs: e=>e.time, getSummary: (es) => es.length+' meal'+(es.length!==1?'s':''), dotClass:'week-dot-meal' },
+    { key:'pee',    label:'🚽 Pees',   store:'peeing',   getTs: e=>e.time, getSummary: (es) => es.length+' pee'+(es.length!==1?'s':''), dotClass:'week-dot-pee' },
+    { key:'stool',  label:'💩 Stools', store:'stool',    getTs: e=>e.time, getSummary: (es) => es.length+' stool'+(es.length!==1?'s':''), dotClass:'week-dot-stool' },
+    { key:'bed',    label:'🛏️ Accidents', store:'bedwetting', getTs: e=>e.time, getSummary: (es) => es.length+' accident'+(es.length!==1?'s':''), dotClass:'week-dot-bed' },
+    { key:'walk',   label:'🦮 Walks',  store:'walks',    getTs: e=>e.time, getSummary: (es) => es.length+' walk'+(es.length!==1?'s':''), dotClass:'week-dot-walk' },
+    { key:'med',    label:'💊 Meds',   store:'meds',     getTs: e=>e.time, getSummary: (es) => es.length+' dose'+(es.length!==1?'s':''), dotClass:'week-dot-med' },
+    { key:'vomit',  label:'🤢 Vomit',  store:'vomit',    getTs: e=>e.time, getSummary: (es) => es.length+' episode'+(es.length!==1?'s':''), dotClass:'week-dot-vomit' },
+    { key:'sleep',  label:'💤 Sleep',  store:'sleep',    getTs: e=>e.date+'T08:00', getSummary: (es) => es.map(e=>e.quality+'/10').join(', '), dotClass:'week-dot-sleep' },
+  ];
+
+  const grid = document.createElement('div');
+  grid.className = 'week-grid';
+
+  days.forEach((day, di) => {
+    const dayStr = day.toISOString().slice(0,10);
+    const isToday = dayStr === todayStr;
+    const col = document.createElement('div');
+    col.className = 'week-day-col';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'week-day-header' + (isToday ? ' today-col' : '');
+    hdr.textContent = dayNames[di];
+    col.appendChild(hdr);
+
+    const dateDiv = document.createElement('div');
+    dateDiv.className = 'week-day-date';
+    dateDiv.textContent = day.getDate();
+    if (isToday) dateDiv.style.fontWeight = '700';
+    col.appendChild(dateDiv);
+
+    const dotGroup = document.createElement('div');
+    dotGroup.className = 'week-dot-group';
+
+    categories.forEach(cat => {
+      const entries = store[cat.store].filter(e => {
+        const ts = cat.getTs(e);
+        return ts && ts.startsWith(dayStr);
+      });
+      if (entries.length > 0) {
+        const dot = document.createElement('div');
+        dot.className = 'week-dot ' + cat.dotClass;
+        dot.textContent = cat.getSummary(entries);
+        dot.title = cat.label + ': ' + cat.getSummary(entries);
+        dotGroup.appendChild(dot);
+      }
+    });
+
+    if (!dotGroup.children.length) {
+      const empty = document.createElement('div');
+      empty.className = 'week-dot-empty';
+      dotGroup.appendChild(empty);
+    }
+    col.appendChild(dotGroup);
+    grid.appendChild(col);
+  });
+
+  const container = document.getElementById('weekGridContainer');
+  container.innerHTML = '';
+  container.appendChild(grid);
+
+  // Totals
+  const allDayStrs = days.map(d => d.toISOString().slice(0,10));
+  const totalWater = store.drinking.filter(e => allDayStrs.some(d => e.time && e.time.startsWith(d))).reduce((s,e)=>s+e.amount,0);
+  const totalPees = store.peeing.filter(e => allDayStrs.some(d => e.time && e.time.startsWith(d))).length;
+  const totalWalks = store.walks.filter(e => allDayStrs.some(d => e.time && e.time.startsWith(d))).length;
+  const totalBed = store.bedwetting.filter(e => allDayStrs.some(d => e.time && e.time.startsWith(d))).length;
+  const totalVomit = store.vomit.filter(e => allDayStrs.some(d => e.time && e.time.startsWith(d))).length;
+  const totalMeds = store.meds.filter(e => allDayStrs.some(d => e.time && e.time.startsWith(d))).length;
+
+  document.getElementById('weekTotals').innerHTML = `
+    <div class="stat-box" style="padding:14px;"><div class="stat-value" style="font-size:1.3rem;">${totalWater}ml</div><div class="stat-label">💧 Total water</div></div>
+    <div class="stat-box" style="padding:14px;"><div class="stat-value" style="font-size:1.3rem;">${totalPees}</div><div class="stat-label">🚽 Total pees</div></div>
+    <div class="stat-box" style="padding:14px;"><div class="stat-value" style="font-size:1.3rem;">${totalWalks}</div><div class="stat-label">🦮 Walks</div></div>
+    <div class="stat-box" style="padding:14px;"><div class="stat-value" style="font-size:1.3rem;${totalBed>0?'color:var(--blush)':''}">${totalBed}</div><div class="stat-label">🛏️ Bed accidents</div></div>
+    <div class="stat-box" style="padding:14px;"><div class="stat-value" style="font-size:1.3rem;${totalVomit>0?'color:var(--blush)':''}">${totalVomit}</div><div class="stat-label">🤢 Vomit episodes</div></div>
+    <div class="stat-box" style="padding:14px;"><div class="stat-value" style="font-size:1.3rem;">${totalMeds}</div><div class="stat-label">💊 Doses given</div></div>
+  `;
+
+  // Legend
+  const legendHtml = categories.map(c => `<span class="week-dot ${c.dotClass}" style="padding:4px 10px;">${c.label}</span>`).join('');
+  document.getElementById('weekLegend').innerHTML = legendHtml;
+}
+
+init();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
